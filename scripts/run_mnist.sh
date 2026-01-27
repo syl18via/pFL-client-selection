@@ -43,7 +43,7 @@ BETA=1
 
 # MESA (你的算法)
 echo "[1/6] Running MESA... (log: $LOG_DIR/dnn_MESA.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm MESA \
@@ -52,7 +52,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # Oort
 echo "[2/6] Running Oort... (log: $LOG_DIR/dnn_Oort.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm Oort \
@@ -61,7 +61,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # PoC
 echo "[3/6] Running PoC... (log: $LOG_DIR/dnn_PoC.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm PoC \
@@ -70,7 +70,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # pFedMe
 echo "[4/6] Running pFedMe... (log: $LOG_DIR/dnn_pFedMe.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm pFedMe \
@@ -79,7 +79,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # FedAvg
 echo "[5/6] Running FedAvg... (log: $LOG_DIR/dnn_FedAvg.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta $BETA --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
     --algorithm FedAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
@@ -87,7 +87,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # PerAvg
 echo "[6/6] Running PerAvg... (log: $LOG_DIR/dnn_PerAvg.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta 0.001 --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
     --algorithm PerAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
@@ -110,7 +110,7 @@ BETA=1
 
 # MESA
 echo "[1/6] Running MESA (Convex)... (log: $LOG_DIR/mclr_MESA.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm MESA \
@@ -119,7 +119,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # Oort
 echo "[2/6] Running Oort (Convex)... (log: $LOG_DIR/mclr_Oort.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm Oort \
@@ -128,7 +128,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # PoC
 echo "[3/6] Running PoC (Convex)... (log: $LOG_DIR/mclr_PoC.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm PoC \
@@ -137,7 +137,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # pFedMe
 echo "[4/6] Running pFedMe (Convex)... (log: $LOG_DIR/mclr_pFedMe.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm pFedMe \
@@ -146,7 +146,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # FedAvg
 echo "[5/6] Running FedAvg (Convex)... (log: $LOG_DIR/mclr_FedAvg.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta $BETA --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
     --algorithm FedAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
@@ -154,7 +154,7 @@ nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE
 
 # PerAvg
 echo "[6/6] Running PerAvg (Convex)... (log: $LOG_DIR/mclr_PerAvg.log)"
-nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta 0.001 --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
     --algorithm PerAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
