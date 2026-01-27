@@ -4,6 +4,20 @@
 
 set -e  # 出错时停止
 
+# 终止所有与 "python3 main.py" 相关的进程（如有在运行）
+PIDS=$(ps aux | grep "python3 main.py" | grep -v grep | awk '{print $2}')
+if [ ! -z "$PIDS" ]; then
+    echo "Killing processes: $PIDS"
+    kill -9 $PIDS
+fi
+
+# ============ 创建日志目录 ============
+TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+EXPERIMENT_NAME="mnist"
+LOG_DIR="logs/${TIMESTAMP}-${EXPERIMENT_NAME}"
+mkdir -p "$LOG_DIR"
+echo "Log directory: $LOG_DIR"
+
 # ============ 配置参数 ============
 DATASET="Mnist"
 BATCH_SIZE=20
@@ -28,50 +42,56 @@ PERSONAL_LR=0.09
 BETA=1
 
 # MESA (你的算法)
-echo "[1/6] Running MESA..."
-# python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
-#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-#     --local_epochs $LOCAL_EPOCHS --algorithm MESA \
-#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU
+echo "[1/6] Running MESA... (log: $LOG_DIR/dnn_MESA.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+    --local_epochs $LOCAL_EPOCHS --algorithm MESA \
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_MESA.log" 2>&1
 
 # Oort
-echo "[2/6] Running Oort..."
-# python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
-#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-#     --local_epochs $LOCAL_EPOCHS --algorithm Oort \
-#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU
+echo "[2/6] Running Oort... (log: $LOG_DIR/dnn_Oort.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+    --local_epochs $LOCAL_EPOCHS --algorithm Oort \
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_Oort.log" 2>&1
 
 # PoC
-echo "[3/6] Running PoC..."
-# python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
-#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-#     --local_epochs $LOCAL_EPOCHS --algorithm PoC \
-#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU
+echo "[3/6] Running PoC... (log: $LOG_DIR/dnn_PoC.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+    --local_epochs $LOCAL_EPOCHS --algorithm PoC \
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_PoC.log" 2>&1
 
 # pFedMe
-echo "[4/6] Running pFedMe..."
-# python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
-#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-#     --local_epochs $LOCAL_EPOCHS --algorithm pFedMe \
-#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU
+echo "[4/6] Running pFedMe... (log: $LOG_DIR/dnn_pFedMe.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+    --local_epochs $LOCAL_EPOCHS --algorithm pFedMe \
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_pFedMe.log" 2>&1
 
 # FedAvg
-echo "[5/6] Running FedAvg..."
-# python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-#     --learning_rate $LR --beta $BETA --lamda $LAMDA \
-#     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
-#     --algorithm FedAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU
+echo "[5/6] Running FedAvg... (log: $LOG_DIR/dnn_FedAvg.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+    --learning_rate $LR --beta $BETA --lamda $LAMDA \
+    --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
+    --algorithm FedAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_FedAvg.log" 2>&1
 
 # PerAvg
-echo "[6/6] Running PerAvg..."
-python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+echo "[6/6] Running PerAvg... (log: $LOG_DIR/dnn_PerAvg.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta 0.001 --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
-    --algorithm PerAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU
+    --algorithm PerAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_PerAvg.log" 2>&1
 
 echo "=========================================="
 echo "MNIST Non-Convex Experiments Completed!"
@@ -89,52 +109,59 @@ PERSONAL_LR=0.1
 BETA=1
 
 # MESA
-echo "[1/6] Running MESA (Convex)..."
-python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+echo "[1/6] Running MESA (Convex)... (log: $LOG_DIR/mclr_MESA.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm MESA \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_MESA.log" 2>&1
 
 # Oort
-echo "[2/6] Running Oort (Convex)..."
-python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+echo "[2/6] Running Oort (Convex)... (log: $LOG_DIR/mclr_Oort.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm Oort \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_Oort.log" 2>&1
 
 # PoC
-echo "[3/6] Running PoC (Convex)..."
-python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+echo "[3/6] Running PoC (Convex)... (log: $LOG_DIR/mclr_PoC.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm PoC \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_PoC.log" 2>&1
 
 # pFedMe
-echo "[4/6] Running pFedMe (Convex)..."
-python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+echo "[4/6] Running pFedMe (Convex)... (log: $LOG_DIR/mclr_pFedMe.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
     --local_epochs $LOCAL_EPOCHS --algorithm pFedMe \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_pFedMe.log" 2>&1
 
 # FedAvg
-echo "[5/6] Running FedAvg (Convex)..."
-python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+echo "[5/6] Running FedAvg (Convex)... (log: $LOG_DIR/mclr_FedAvg.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta $BETA --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
-    --algorithm FedAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU
+    --algorithm FedAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_FedAvg.log" 2>&1
 
 # PerAvg
-echo "[6/6] Running PerAvg (Convex)..."
-python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+echo "[6/6] Running PerAvg (Convex)... (log: $LOG_DIR/mclr_PerAvg.log)"
+nohup python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta 0.001 --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
-    --algorithm PerAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU
+    --algorithm PerAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_PerAvg.log" 2>&1
 
 echo "=========================================="
 echo "All MNIST Experiments Completed!"
 echo "Results saved in ./results/"
+echo "Logs saved in $LOG_DIR"
 echo "=========================================="
