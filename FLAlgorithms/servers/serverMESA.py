@@ -27,10 +27,10 @@ class MESA(pFedMe):
         self.V = np.ones(len(self.users)) 
         self.epsilon = 0.1 # 探索率
 
-    def train(self, save_model=False):
+    def train(self, save_model=False, current_time=0, total_times=1):
         loss = []
         for glob_iter in range(self.num_glob_iters):
-            print("-------------MESA Round number: ", glob_iter, " -------------")
+            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (MESA)-------------")
             self.send_parameters()
             self.evaluate() # 记录全局精度
 

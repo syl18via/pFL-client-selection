@@ -133,3 +133,4 @@ data/*/data/train/
 data/*/data/test/
 data/*/data/openml/
 models/
+logs/

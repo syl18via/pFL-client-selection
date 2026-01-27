@@ -35,10 +35,10 @@ class PerAvg(Server):
         for user in self.users:
             user.set_grads(grads)
 
-    def train(self, save_model=False):
+    def train(self, save_model=False, current_time=0, total_times=1):
         loss = []
         for glob_iter in range(self.num_glob_iters):
-            print("-------------Round number: ",glob_iter, " -------------")
+            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (PerAvg)-------------")
             # send all parameter for users 
             self.send_parameters()
 

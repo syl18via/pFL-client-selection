@@ -63,7 +63,7 @@ def main(dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_
         if(algorithm == "MESA"):
             server = MESA(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i)
         
-        server.train(save_model=save_model)
+        server.train(save_model=save_model, current_time=i, total_times=times)
         server.test()
 
     # Average data 

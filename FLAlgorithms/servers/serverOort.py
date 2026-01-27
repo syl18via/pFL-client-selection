@@ -12,10 +12,10 @@ class Oort(pFedMe):
         self.step_window = 10  # Oort 的滑动窗口，这里简化为只存最新的
         self.exploration = 0.1 # Oort 的 epsilon-greedy
 
-    def train(self, save_model=False):
+    def train(self, save_model=False, current_time=0, total_times=1):
         # 必须重写 train，因为 Oort 需要在训练后收集 Loss 来更新 Utility
         for glob_iter in range(self.num_glob_iters):
-            print("-------------Oort Round number: ", glob_iter, " -------------")
+            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (Oort)-------------")
             self.send_parameters()
             self.evaluate()
 
@@ -39,8 +39,14 @@ class Oort(pFedMe):
             # 3. 训练 & 更新 Utility
             for user_idx in selected_indices:
                 user = self.users[user_idx]
-                # 注意：UserpFedMe.train 默认返回 LOSS (我们正好需要这个)
-                loss, _ = user.train(self.local_epochs) 
+                # 先训练
+                user.train(self.local_epochs)
+                
+                # 训练后获取 loss 来更新 Utility
+                _, loss, _ = user.train_error_and_loss()
+                # 将 tensor 转换为 Python float
+                if hasattr(loss, 'item'):
+                    loss = loss.detach().item()
                 
                 # Oort Update: 更新该用户的 Utility
                 # 这里用 Loss^2 作为梯度范数的近似 (Oort 论文做法)
