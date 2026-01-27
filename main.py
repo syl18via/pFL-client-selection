@@ -9,6 +9,7 @@ import os
 from FLAlgorithms.servers.serverMESA import MESA
 from FLAlgorithms.servers.serverOort import Oort
 from FLAlgorithms.servers.serverPoC import PoC
+from FLAlgorithms.servers.serverHICS import HiCS
 from FLAlgorithms.servers.serveravg import FedAvg
 from FLAlgorithms.servers.serverpFedMe import pFedMe
 from FLAlgorithms.servers.serverperavg import PerAvg
@@ -63,6 +64,9 @@ def main(dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_
         if(algorithm == "MESA"):
             server = MESA(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i)
         
+        if(algorithm == "HiCS"):
+            server = HiCS(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i)
+        
         server.train()
         server.test()
 
@@ -84,7 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_global_iters", type=int, default=800)
     parser.add_argument("--local_epochs", type=int, default=20)
     parser.add_argument("--optimizer", type=str, default="SGD")
-    parser.add_argument("--algorithm", type=str, default="pFedMe",choices=["pFedMe", "PerAvg", "FedAvg"]) 
+    parser.add_argument("--algorithm", type=str, default="pFedMe",choices=["pFedMe", "PerAvg", "FedAvg", "PoC", "MESA", "Oort", "HiCS"]) 
     parser.add_argument("--numusers", type=int, default=20, help="Number of Users per round")
     parser.add_argument("--K", type=int, default=5, help="Computation steps")
     parser.add_argument("--personal_learning_rate", type=float, default=0.09, help="Persionalized learning rate to caculate theta aproximately using K steps")
