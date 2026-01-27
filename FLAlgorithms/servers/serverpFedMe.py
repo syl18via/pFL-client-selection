@@ -38,7 +38,7 @@ class pFedMe(Server):
         for user in self.users:
             user.set_grads(grads)
 
-    def train(self):
+    def train(self, save_model=False):
         loss = []
         for glob_iter in range(self.num_glob_iters):
             print("-------------Round number: ",glob_iter, " -------------")
@@ -68,6 +68,7 @@ class pFedMe(Server):
 
         #print(loss)
         self.save_results()
-        self.save_model()
+        if save_model:
+            self.save_model()
     
   

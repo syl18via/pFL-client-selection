@@ -12,7 +12,7 @@ class Oort(pFedMe):
         self.step_window = 10  # Oort 的滑动窗口，这里简化为只存最新的
         self.exploration = 0.1 # Oort 的 epsilon-greedy
 
-    def train(self):
+    def train(self, save_model=False):
         # 必须重写 train，因为 Oort 需要在训练后收集 Loss 来更新 Utility
         for glob_iter in range(self.num_glob_iters):
             print("-------------Oort Round number: ", glob_iter, " -------------")
@@ -49,4 +49,5 @@ class Oort(pFedMe):
             self.persionalized_aggregate_parameters()
 
         self.save_results()
-        self.save_model()
+        if save_model:
+            self.save_model()

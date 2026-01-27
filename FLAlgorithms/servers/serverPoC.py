@@ -12,7 +12,7 @@ class PoC(pFedMe):
         # 防止 d 超过总用户数
         self.d = min(self.d, len(self.users))
 
-    def train(self):
+    def train(self, save_model=False):
         for glob_iter in range(self.num_glob_iters):
             print("-------------PoC Round number: ", glob_iter, " -------------")
             self.send_parameters()
@@ -47,4 +47,5 @@ class PoC(pFedMe):
             self.persionalized_aggregate_parameters()
 
         self.save_results()
-        self.save_model()
+        if save_model:
+            self.save_model()
