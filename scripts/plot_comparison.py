@@ -95,13 +95,15 @@ def plot_comparison(dataset, model, output_dir="./figures", max_rounds=None):
     K = 5
     
     # 算法配置
+    # 注意：所有个性化联邦学习算法使用个性化模型结果（personalized: True）
+    # FedAvg 没有个性化模型，使用全局模型结果（personalized: False）
     algorithms_config = [
-        {"name": "MESA", "label": "MESA (Ours)", "color": "tab:red", "marker": "o", "personalized": False},
+        {"name": "MESA", "label": "MESA (Ours)", "color": "tab:red", "marker": "o", "personalized": True},
         {"name": "HiCS", "label": "HiCS", "color": "tab:cyan", "marker": "^", "personalized": True},
-        {"name": "Oort", "label": "Oort", "color": "tab:blue", "marker": "v", "personalized": False},
-        {"name": "PoC", "label": "PoC", "color": "tab:green", "marker": "s", "personalized": False},
-        {"name": "pFedMe", "label": "pFedMe", "color": "tab:orange", "marker": "*", "personalized": False},
-        {"name": "FedAvg", "label": "FedAvg", "color": "tab:purple", "marker": "x", "personalized": False},
+        {"name": "Oort", "label": "Oort", "color": "tab:blue", "marker": "v", "personalized": True},
+        {"name": "PoC", "label": "PoC", "color": "tab:green", "marker": "s", "personalized": True},
+        {"name": "pFedMe", "label": "pFedMe", "color": "tab:orange", "marker": "*", "personalized": True},
+        {"name": "FedAvg", "label": "FedAvg", "color": "tab:purple", "marker": "x", "personalized": False},  # FedAvg 没有个性化模型
         {"name": "PerAvg", "label": "Per-FedAvg", "color": "tab:brown", "marker": "d", "personalized": True, "beta": 0.001},
     ]
     

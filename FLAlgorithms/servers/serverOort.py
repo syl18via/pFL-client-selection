@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from FLAlgorithms.servers.serverpFedMe import pFedMe
 
 class Oort(pFedMe):
@@ -15,6 +16,8 @@ class Oort(pFedMe):
     def train(self, save_model=False, current_time=0, total_times=1):
         # 必须重写 train，因为 Oort 需要在训练后收集 Loss 来更新 Utility
         for glob_iter in range(self.num_glob_iters):
+            round_start_time = time.time()  # Start timing this round
+            
             print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (Oort)-------------")
             self.send_parameters()
             self.evaluate()
@@ -55,6 +58,10 @@ class Oort(pFedMe):
             # Evaluate personalized model
             self.evaluate_personalized_model()
             self.persionalized_aggregate_parameters()
+
+            # Record time for this round
+            round_time = time.time() - round_start_time
+            self.record_time(round_time)
 
         self.save_results()
         if save_model:

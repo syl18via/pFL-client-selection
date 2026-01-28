@@ -4,6 +4,7 @@ import numpy as np
 import h5py
 from utils.model_utils import Metrics
 import copy
+import time
 
 class Server:
     def __init__(self, device, dataset,algorithm, model, batch_size, learning_rate ,beta, lamda,
@@ -32,6 +33,12 @@ class Server:
         self.algorithm = algorithm
         self.rs_train_acc, self.rs_train_loss, self.rs_glob_acc,self.rs_train_acc_per, self.rs_train_loss_per, self.rs_glob_acc_per = [], [], [], [], [], []
         self.times = times
+        
+        # Time tracking for Accuracy vs. Wall-clock Time plots
+        self.wall_clock_times = []  # Cumulative wall-clock time at each round
+        self.round_times = []  # Time taken for each round
+        self.total_elapsed_time = 0.0  # Total elapsed time
+        
         # Initialize the server's grads to zeros
         #for param in self.model.parameters():
         #    param.data = torch.zeros_like(param.data)
@@ -146,6 +153,10 @@ class Server:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc)
                 hf.create_dataset('rs_train_acc', data=self.rs_train_acc)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss)
+                # Save time data for Accuracy vs. Wall-clock Time plots
+                if len(self.wall_clock_times) > 0:
+                    hf.create_dataset('wall_clock_times', data=self.wall_clock_times)
+                    hf.create_dataset('round_times', data=self.round_times)
                 hf.close()
         
         # store persionalized value
@@ -159,6 +170,10 @@ class Server:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc_per)
                 hf.create_dataset('rs_train_acc', data=self.rs_train_acc_per)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss_per)
+                # Save time data for personalized model (same as global model)
+                if len(self.wall_clock_times) > 0:
+                    hf.create_dataset('wall_clock_times', data=self.wall_clock_times)
+                    hf.create_dataset('round_times', data=self.round_times)
                 hf.close()
 
     def test(self):
@@ -218,6 +233,12 @@ class Server:
 
         return ids, num_samples, tot_correct, losses
 
+    def record_time(self, round_time):
+        """Record time for current round and update cumulative time"""
+        self.round_times.append(round_time)
+        self.total_elapsed_time += round_time
+        self.wall_clock_times.append(self.total_elapsed_time)
+    
     def evaluate(self):
         stats = self.test()  
         stats_train = self.train_error_and_loss()

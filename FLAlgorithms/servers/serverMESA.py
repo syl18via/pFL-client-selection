@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from FLAlgorithms.servers.serverpFedMe import pFedMe
 from FLAlgorithms.users.userMESA import UserMESA
 from utils.model_utils import read_data, read_user_data
@@ -30,6 +31,8 @@ class MESA(pFedMe):
     def train(self, save_model=False, current_time=0, total_times=1):
         loss = []
         for glob_iter in range(self.num_glob_iters):
+            round_start_time = time.time()  # Start timing this round
+            
             print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (MESA)-------------")
             self.send_parameters()
             self.evaluate() # 记录全局精度
@@ -61,6 +64,10 @@ class MESA(pFedMe):
             # === MESA 核心逻辑 4: 聚合 ===
             self.evaluate_personalized_model()
             self.persionalized_aggregate_parameters()
+
+            # Record time for this round
+            round_time = time.time() - round_start_time
+            self.record_time(round_time)
 
         self.save_results()
         if save_model:

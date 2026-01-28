@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+import time
 from scipy.cluster.hierarchy import linkage, fcluster
 import scipy.stats
 from itertools import product
@@ -370,6 +371,8 @@ class HiCS(pFedMe):
         self.before_train(n_samples_dict, self.model)
         
         for glob_iter in range(self.num_glob_iters):
+            round_start_time = time.time()  # Start timing this round
+            
             print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (HiCS)-------------")
             
             # Store previous global model before sending parameters
@@ -402,6 +405,10 @@ class HiCS(pFedMe):
             # Aggregate parameters
             self.evaluate_personalized_model()
             self.persionalized_aggregate_parameters()
+
+            # Record time for this round
+            round_time = time.time() - round_start_time
+            self.record_time(round_time)
 
         self.save_results()
         if save_model:

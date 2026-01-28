@@ -1,5 +1,6 @@
 import torch
 import os
+import time
 
 from FLAlgorithms.users.useravg import UserAVG
 from FLAlgorithms.servers.serverbase import Server
@@ -40,6 +41,8 @@ class FedAvg(Server):
     def train(self, save_model=False, current_time=0, total_times=1):
         loss = []
         for glob_iter in range(self.num_glob_iters):
+            round_start_time = time.time()  # Start timing this round
+            
             print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (FedAvg)-------------")
             #loss_ = 0
             self.send_parameters()
@@ -51,6 +54,11 @@ class FedAvg(Server):
             for user in self.selected_users:
                 user.train(self.local_epochs) #* user.train_samples
             self.aggregate_parameters()
+            
+            # Record time for this round
+            round_time = time.time() - round_start_time
+            self.record_time(round_time)
+            
             #loss_ /= self.total_train_samples
             #loss.append(loss_)
             #print(loss_)
