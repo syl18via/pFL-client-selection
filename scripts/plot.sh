@@ -24,15 +24,15 @@ echo "=========================================="
 
 echo ""
 echo "[1/3] 绘制准确率对比图..."
-python scripts/plot_comparison.py --result_dir "$RESULT_DIR"
+python3 scripts/plot_comparison.py --result_dir "$RESULT_DIR"
 
 echo ""
 echo "[2/3] 绘制时间对比图..."
-python scripts/plot_time_comparison.py --result_dir "$RESULT_DIR"
+python3 scripts/plot_time_comparison.py --result_dir "$RESULT_DIR"
 
 echo ""
 echo "[3/3] 绘制选择有效性分析图..."
-python scripts/plot_selection_effectiveness.py --result_dir "$RESULT_DIR"
+python3 scripts/plot_selection_effectiveness.py --result_dir "$RESULT_DIR"
 
 echo ""
 echo "=========================================="
