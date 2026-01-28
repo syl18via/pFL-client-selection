@@ -157,13 +157,8 @@ class Server:
         )
         os.makedirs(result_dir, exist_ok=True)
         
-        alg = self.dataset + "_" + self.algorithm
-        alg = alg + "_" + str(self.learning_rate) + "_" + str(self.beta) + "_" + str(self.lamda) + "_" + str(self.num_users) + "u" + "_" + str(self.batch_size) + "b" + "_" + str(self.local_epochs)
-        # MESA, HiCS, Oort, PoC 也继承自 pFedMe，需要 K 和 personal_learning_rate 参数
-        if(self.algorithm in ["pFedMe", "MESA", "HiCS", "Oort", "PoC"] or self.algorithm == "pFedMe_p"):
-            if hasattr(self, 'K') and hasattr(self, 'personal_learning_rate'):
-                alg = alg + "_" + str(self.K) + "_" + str(self.personal_learning_rate)
-        alg = alg + "_" + str(self.times)
+        # 文件名使用 current_time（当前实验次数）
+        alg = build_result_filename(self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=False)[:-3]  # 去掉.h5后缀
         if (len(self.rs_glob_acc) != 0 &  len(self.rs_train_acc) & len(self.rs_train_loss)) :
             with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc)
