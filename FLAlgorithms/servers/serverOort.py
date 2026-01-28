@@ -52,6 +52,8 @@ class Oort(pFedMe):
                 # 这里用 Loss^2 作为梯度范数的近似 (Oort 论文做法)
                 self.client_utilities[user_idx] = loss ** 2
 
+            # Evaluate personalized model
+            self.evaluate_personalized_model()
             self.persionalized_aggregate_parameters()
 
         self.save_results()

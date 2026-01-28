@@ -50,13 +50,12 @@ class pFedMe(Server):
             print("")
             self.evaluate()
 
-            # do update for all users not only selected users
-            for user in self.users:
-                user.train(self.local_epochs) #* user.train_samples
-            
-            # choose several users to send back upated model to server
-            # self.personalized_evaluate()
+            # choose several users to send back upated model to server (random selection)
             self.selected_users = self.select_users(glob_iter,self.num_users)
+            
+            # do update for selected users only (for fair comparison with client selection algorithms)
+            for user in self.selected_users:
+                user.train(self.local_epochs) #* user.train_samples
 
             # Evaluate gloal model on user for each interation
             #print("Evaluate persionalized model")
