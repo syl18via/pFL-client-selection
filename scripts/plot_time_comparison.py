@@ -59,8 +59,13 @@ def smooth(data, window_len=20):
     y = np.convolve(w/w.sum(), s, mode='valid')
     return y[window_len-1:]
 
-def scan_result_files(result_dir):
-    """扫描结果目录，返回所有算法的结果文件信息"""
+def scan_result_files(result_dir, prefer_single_run=False):
+    """扫描结果目录，返回所有算法的结果文件信息
+    
+    Args:
+        result_dir: 结果目录路径
+        prefer_single_run: 是否优先选择单次实验文件（用于时间数据分析，因为 avg 文件不包含时间数据）
+    """
     if not os.path.isdir(result_dir):
         logger.error(f"Directory not found: {result_dir}")
         return {}
@@ -85,10 +90,19 @@ def scan_result_files(result_dir):
             files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
         else:
             existing_time = files[key]["info"].get('current_time')
-            if current_time == "avg" and existing_time != "avg":
-                files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
-            elif existing_time != "avg" and current_time == 0 and existing_time != 0:
-                files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
+            
+            if prefer_single_run:
+                # 优先单次实验文件（current_time=0），因为 avg 文件不包含时间数据
+                if current_time == 0 and existing_time != 0:
+                    files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
+                elif existing_time == "avg" and current_time != "avg":
+                    files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
+            else:
+                # 优先 avg 文件
+                if current_time == "avg" and existing_time != "avg":
+                    files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
+                elif existing_time != "avg" and current_time == 0 and existing_time != 0:
+                    files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
     
     return files
 
@@ -110,7 +124,8 @@ def plot_time_comparison(result_dir, output_dir="./figures", max_time=None):
     logger.info(f"Parsed experiment info: model={model}, dataset={dataset}")
     
     # 扫描目录中的结果文件
-    all_files = scan_result_files(result_dir)
+    # 优先使用 _avg 文件（多轮平均），如果 _avg 文件没有时间数据会自动回退到单次实验文件
+    all_files = scan_result_files(result_dir, prefer_single_run=False)
     
     if not all_files:
         logger.error("No result files found!")

@@ -97,7 +97,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
 # PerAvg
 echo "[7/7] Running PerAvg... (log: $LOG_DIR/dnn_PerAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-    --learning_rate $LR --beta 0.001 --lamda $LAMDA \
+    --learning_rate $LR --beta $BETA --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
     --algorithm PerAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
     > "$LOG_DIR/dnn_PerAvg.log" 2>&1
@@ -173,7 +173,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
 # PerAvg
 echo "[7/7] Running PerAvg (Convex)... (log: $LOG_DIR/mclr_PerAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-    --learning_rate $LR --beta 0.001 --lamda $LAMDA \
+    --learning_rate $LR --beta $BETA --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
     --algorithm PerAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU \
     > "$LOG_DIR/mclr_PerAvg.log" 2>&1

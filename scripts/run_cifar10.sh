@@ -69,7 +69,7 @@ python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
 # PerAvg
 echo "[6/6] Running PerAvg..."
 python3 main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-    --learning_rate $LR --beta 0.001 --lamda $LAMDA \
+    --learning_rate $LR --beta $BETA --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
     --algorithm PerAvg --numusers $NUM_USERS --times $TIMES --gpu $GPU
 

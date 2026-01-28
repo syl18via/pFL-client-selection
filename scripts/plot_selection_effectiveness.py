@@ -55,8 +55,13 @@ def read_h5_file_with_selection(filepath):
     hf.close()
     return selected_client_losses, selected_client_indices, rs_glob_acc, wall_clock_times
 
-def scan_result_files(result_dir):
-    """扫描结果目录，返回所有算法的结果文件信息"""
+def scan_result_files(result_dir, prefer_single_run=False):
+    """扫描结果目录，返回所有算法的结果文件信息
+    
+    Args:
+        result_dir: 结果目录路径
+        prefer_single_run: 是否优先选择单次实验文件（用于 selection data 分析，因为 avg 文件不包含 selection data）
+    """
     if not os.path.isdir(result_dir):
         logger.error(f"Directory not found: {result_dir}")
         return {}
@@ -81,10 +86,19 @@ def scan_result_files(result_dir):
             files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
         else:
             existing_time = files[key]["info"].get('current_time')
-            if current_time == "avg" and existing_time != "avg":
-                files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
-            elif existing_time != "avg" and current_time == 0 and existing_time != 0:
-                files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
+            
+            if prefer_single_run:
+                # 优先单次实验文件（current_time=0），因为 avg 文件不包含 selection data
+                if current_time == 0 and existing_time != 0:
+                    files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
+                elif existing_time == "avg" and current_time != "avg":
+                    files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
+            else:
+                # 优先 avg 文件
+                if current_time == "avg" and existing_time != "avg":
+                    files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
+                elif existing_time != "avg" and current_time == 0 and existing_time != 0:
+                    files[key] = {"filepath": filepath, "info": info, "algorithm": alg, "personalized": personalized}
     
     return files
 
@@ -106,7 +120,7 @@ def plot_loss_distribution(result_dir, output_dir="./figures"):
     logger.info(f"Parsed experiment info: model={model}, dataset={dataset}")
     
     # 扫描目录中的结果文件
-    all_files = scan_result_files(result_dir)
+    all_files = scan_result_files(result_dir, prefer_single_run=True)
     
     # 优先使用个性化模型（FedAvg 除外）
     algorithms_to_plot = {}
@@ -179,7 +193,7 @@ def plot_loss_distribution(result_dir, output_dir="./figures"):
     box_labels = [all_labels[alg_name] for alg_name in all_losses.keys()]
     box_colors = [all_colors[alg_name] for alg_name in all_losses.keys()]
     
-    bp = ax2.boxplot(box_data, labels=box_labels, patch_artist=True, 
+    bp = ax2.boxplot(box_data, tick_labels=box_labels, patch_artist=True, 
                      showmeans=True, meanline=True)
     
     for patch, color in zip(bp['boxes'], box_colors):
@@ -213,7 +227,7 @@ def plot_loss_over_rounds(result_dir, output_dir="./figures"):
     model = dir_info.get('model_name', 'unknown')
     dataset = dir_info.get('dataset', 'unknown')
     
-    all_files = scan_result_files(result_dir)
+    all_files = scan_result_files(result_dir, prefer_single_run=True)
     
     algorithms_to_plot = {}
     for key, file_info in all_files.items():
@@ -282,7 +296,7 @@ def print_statistics_summary(result_dir):
     model = dir_info.get('model_name', 'unknown')
     dataset = dir_info.get('dataset', 'unknown')
     
-    all_files = scan_result_files(result_dir)
+    all_files = scan_result_files(result_dir, prefer_single_run=True)
     
     algorithms_to_plot = {}
     for key, file_info in all_files.items():

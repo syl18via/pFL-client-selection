@@ -10,8 +10,17 @@ plt.rcParams.update({'font.size': 14})
 
 def simple_read_data(model_name, dataset, num_users, num_glob_iters, total_times,
                      learning_rate, beta, lamda, batch_size, algorithm, local_epochs,
-                     current_time, K=None, personal_learning_rate=None, personalized=False):
-    """使用统一路径工具读取结果文件"""
+                     current_time, K=None, personal_learning_rate=None, personalized=False,
+                     include_time=False):
+    """使用统一路径工具读取结果文件
+    
+    Args:
+        include_time: 是否同时读取时间数据（wall_clock_times, round_times）
+    
+    Returns:
+        如果 include_time=False: (rs_train_acc, rs_train_loss, rs_glob_acc)
+        如果 include_time=True: (rs_train_acc, rs_train_loss, rs_glob_acc, wall_clock_times, round_times)
+    """
     filepath = build_result_filepath(
         model_name=model_name, dataset=dataset, num_users=num_users,
         num_glob_iters=num_glob_iters, total_times=total_times, current_time=current_time,
@@ -26,6 +35,13 @@ def simple_read_data(model_name, dataset, num_users, num_glob_iters, total_times
     rs_glob_acc = np.array(hf.get('rs_glob_acc')[:])
     rs_train_acc = np.array(hf.get('rs_train_acc')[:])
     rs_train_loss = np.array(hf.get('rs_train_loss')[:])
+    
+    if include_time:
+        wall_clock_times = np.array(hf.get('wall_clock_times')[:]) if 'wall_clock_times' in hf.keys() else None
+        round_times = np.array(hf.get('round_times')[:]) if 'round_times' in hf.keys() else None
+        hf.close()
+        return rs_train_acc, rs_train_loss, rs_glob_acc, wall_clock_times, round_times
+    
     hf.close()
     return rs_train_acc, rs_train_loss, rs_glob_acc
 
@@ -52,11 +68,21 @@ def get_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=[
             train_acc[i, :], train_loss[i, :], glob_acc[i, :] = np.array(result)[:, :Numb_Glob_Iters]
     return glob_acc, train_acc, train_loss
 
-def get_all_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=0, learning_rate=0,beta=0,algorithms="", batch_size=0, dataset="", k= 0 , personal_learning_rate =0 ,times = 5, model_name="dnn"):
-    """读取某个算法多次实验的数据"""
+def get_all_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=0, learning_rate=0,beta=0,algorithms="", batch_size=0, dataset="", k= 0 , personal_learning_rate =0 ,times = 5, model_name="dnn", include_time=False):
+    """读取某个算法多次实验的数据
+    
+    Args:
+        include_time: 是否同时读取时间数据
+    
+    Returns:
+        如果 include_time=False: (glob_acc, train_acc, train_loss)
+        如果 include_time=True: (glob_acc, train_acc, train_loss, wall_clock_times, round_times)
+    """
     train_acc = np.zeros((times, Numb_Glob_Iters))
     train_loss = np.zeros((times, Numb_Glob_Iters))
     glob_acc = np.zeros((times, Numb_Glob_Iters))
+    wall_clock_times = np.zeros((times, Numb_Glob_Iters)) if include_time else None
+    round_times = np.zeros((times, Numb_Glob_Iters)) if include_time else None
     
     K = k if algorithms in PFEDME_BASED_ALGORITHMS else None
     plr = personal_learning_rate if algorithms in PFEDME_BASED_ALGORITHMS else None
@@ -66,10 +92,24 @@ def get_all_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, la
             model_name=model_name, dataset=dataset, num_users=num_users,
             num_glob_iters=Numb_Glob_Iters, total_times=times, current_time=i,
             learning_rate=learning_rate, beta=beta, lamda=lamb, batch_size=batch_size,
-            algorithm=algorithms, local_epochs=loc_ep1, K=K, personal_learning_rate=plr
+            algorithm=algorithms, local_epochs=loc_ep1, K=K, personal_learning_rate=plr,
+            include_time=include_time
         )
-        if result[0] is not None:
-            train_acc[i, :], train_loss[i, :], glob_acc[i, :] = np.array(result)[:, :Numb_Glob_Iters]
+        if include_time:
+            if result[0] is not None:
+                train_acc[i, :] = result[0][:Numb_Glob_Iters]
+                train_loss[i, :] = result[1][:Numb_Glob_Iters]
+                glob_acc[i, :] = result[2][:Numb_Glob_Iters]
+                if result[3] is not None:
+                    wall_clock_times[i, :] = result[3][:Numb_Glob_Iters]
+                if result[4] is not None:
+                    round_times[i, :] = result[4][:Numb_Glob_Iters]
+        else:
+            if result[0] is not None:
+                train_acc[i, :], train_loss[i, :], glob_acc[i, :] = np.array(result)[:, :Numb_Glob_Iters]
+    
+    if include_time:
+        return glob_acc, train_acc, train_loss, wall_clock_times, round_times
     return glob_acc, train_acc, train_loss
 
 
@@ -86,10 +126,23 @@ def get_data_label_style(input_data = [], linestyles= [], algs_lbl = [], lamb = 
 def average_data(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb="", learning_rate="", beta="", algorithms="", batch_size=0, dataset = "", k = "", personal_learning_rate = "", times = 5, model_name="dnn"):
     if(algorithms == "PerAvg"):
         algorithms = "PerAvg_p"
-    glob_acc, train_acc, train_loss = get_all_training_data_value( num_users, loc_ep1, Numb_Glob_Iters, lamb, learning_rate, beta, algorithms, batch_size, dataset, k, personal_learning_rate,times, model_name)
+    # 同时读取时间数据
+    glob_acc, train_acc, train_loss, wall_clock_times, round_times = get_all_training_data_value(
+        num_users, loc_ep1, Numb_Glob_Iters, lamb, learning_rate, beta, algorithms, 
+        batch_size, dataset, k, personal_learning_rate, times, model_name, include_time=True
+    )
     glob_acc_data = np.average(glob_acc, axis=0)
     train_acc_data = np.average(train_acc, axis=0)
     train_loss_data = np.average(train_loss, axis=0)
+    
+    # 平均时间数据（如果存在）
+    wall_clock_times_data = None
+    round_times_data = None
+    if wall_clock_times is not None and np.any(wall_clock_times):
+        wall_clock_times_data = np.average(wall_clock_times, axis=0)
+    if round_times is not None and np.any(round_times):
+        round_times_data = np.average(round_times, axis=0)
+    
     # store average value to h5 file
     max_accurancy = []
     for i in range(times):
@@ -122,6 +175,11 @@ def average_data(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb="", learning
             hf.create_dataset('rs_glob_acc', data=glob_acc_data)
             hf.create_dataset('rs_train_acc', data=train_acc_data)
             hf.create_dataset('rs_train_loss', data=train_loss_data)
+            # 保存平均时间数据
+            if wall_clock_times_data is not None:
+                hf.create_dataset('wall_clock_times', data=wall_clock_times_data)
+            if round_times_data is not None:
+                hf.create_dataset('round_times', data=round_times_data)
             hf.close()
 
 def plot_summary_one_figure(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=[], learning_rate=[], beta=[], algorithms_list=[], batch_size=0, dataset = "", k = [], personal_learning_rate = []):
