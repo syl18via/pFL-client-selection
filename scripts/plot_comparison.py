@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 对比实验画图脚本
-用法: python scripts/plot_comparison.py --dataset Mnist --model dnn
+用法: python scripts/plot_comparison.py --result_dir results/dnn_Mnist_5u_800r_5t_0.005lr_1.0beta_15lam_20bs
 """
 
 import sys
@@ -13,10 +13,21 @@ import matplotlib.pyplot as plt
 import argparse
 import os
 from loguru import logger
-from utils.path_utils import build_result_dir, build_result_filename, build_result_filepath
+from utils.path_utils import parse_result_dir, parse_result_filename
 
 plt.rcParams.update({'font.size': 12})
 plt.rcParams['figure.figsize'] = (8, 6)
+
+# 算法显示配置
+ALGORITHM_STYLES = {
+    "MESA": {"label": "MESA (Ours)", "color": "tab:red", "marker": "o"},
+    "HiCS": {"label": "HiCS", "color": "tab:cyan", "marker": "^"},
+    "Oort": {"label": "Oort", "color": "tab:blue", "marker": "v"},
+    "PoC": {"label": "PoC", "color": "tab:green", "marker": "s"},
+    "pFedMe": {"label": "pFedMe", "color": "tab:orange", "marker": "*"},
+    "FedAvg": {"label": "FedAvg", "color": "tab:purple", "marker": "x"},
+    "PerAvg": {"label": "Per-FedAvg", "color": "tab:brown", "marker": "d"},
+}
 
 def read_h5_file(filepath):
     """读取h5文件中的数据"""
@@ -40,121 +51,135 @@ def smooth(data, window_len=20):
     y = np.convolve(w/w.sum(), s, mode='valid')
     return y[window_len-1:]
 
-def get_result_filepath(model, dataset, num_users, num_glob_iters, total_times, current_time,
-                        lr, beta, lamda, batch_size, algorithm, local_epochs, 
-                        K=None, personal_lr=None, personalized=False):
-    """获取结果文件的完整路径 (使用统一的路径工具)
+def scan_result_files(result_dir):
+    """扫描结果目录，返回所有算法的结果文件信息
     
-    Args:
-        total_times: 实验总次数 (用于目录名)
-        current_time: 当前实验次数 (int 或 "avg"，用于文件名)
+    Returns:
+        dict: {algorithm_name: {"filepath": ..., "info": parsed_info, "personalized": bool}}
     """
-    return build_result_filepath(
-        model_name=model, dataset=dataset, num_users=num_users, 
-        num_glob_iters=num_glob_iters, total_times=total_times, current_time=current_time,
-        learning_rate=lr, beta=beta, lamda=lamda, batch_size=batch_size,
-        algorithm=algorithm, local_epochs=local_epochs, 
-        K=K, personal_learning_rate=personal_lr, personalized=personalized
-    )
+    if not os.path.isdir(result_dir):
+        logger.error(f"Directory not found: {result_dir}")
+        return {}
+    
+    files = {}
+    for filename in os.listdir(result_dir):
+        if not filename.endswith('.h5'):
+            continue
+        
+        info = parse_result_filename(filename)
+        if info is None:
+            logger.warning(f"Cannot parse filename: {filename}")
+            continue
+        
+        alg = info['algorithm']
+        personalized = info.get('personalized', False)
+        current_time = info.get('current_time')
+        
+        # 构建唯一的 key（算法 + 是否个性化）
+        key = f"{alg}_p" if personalized else alg
+        
+        # 优先使用 avg 文件，其次使用 current_time=0 的文件
+        filepath = os.path.join(result_dir, filename)
+        
+        if key not in files:
+            files[key] = {
+                "filepath": filepath,
+                "info": info,
+                "algorithm": alg,
+                "personalized": personalized,
+            }
+        else:
+            # 如果已存在，优先保留 avg 文件
+            existing_time = files[key]["info"].get('current_time')
+            if current_time == "avg" and existing_time != "avg":
+                files[key] = {
+                    "filepath": filepath,
+                    "info": info,
+                    "algorithm": alg,
+                    "personalized": personalized,
+                }
+            elif existing_time != "avg" and current_time == 0:
+                # 如果都不是 avg，优先使用 current_time=0
+                if existing_time != 0:
+                    files[key] = {
+                        "filepath": filepath,
+                        "info": info,
+                        "algorithm": alg,
+                        "personalized": personalized,
+                    }
+    
+    return files
 
-def plot_comparison(dataset, model, output_dir="./figures", max_rounds=None):
-    """绘制对比图
-    
-    Args:
-        max_rounds: 横坐标最大值，None 表示显示全部轮次
-    """
+def plot_from_result_dir(result_dir, output_dir="./figures", max_rounds=None):
+    """从结果目录自动读取并绘制对比图"""
     os.makedirs(output_dir, exist_ok=True)
     
-    # 配置参数 - 根据数据集调整
-    if dataset == "Mnist":
-        num_users = 5
-        num_glob_iters = 800
-        batch_size = 20
-        local_epochs = 20
-        lamda = 15
-        if model == "dnn":
-            lr = 0.005
-            personal_lr = 0.09
-        else:  # mclr
-            lr = 0.005
-            personal_lr = 0.1
-    elif dataset == "Synthetic":
-        num_users = 10
-        num_glob_iters = 600
-        batch_size = 20
-        local_epochs = 20
-        lamda = 20
-        lr = 0.005
-        personal_lr = 0.01
-    elif dataset == "Cifar10":
-        num_users = 5
-        num_glob_iters = 800
-        batch_size = 20
-        local_epochs = 20
-        lamda = 15
-        lr = 0.01
-        personal_lr = 0.01
+    # 解析目录名获取实验参数
+    dir_name = os.path.basename(result_dir.rstrip('/'))
+    dir_info = parse_result_dir(dir_name)
     
-    beta = 1.0
-    K = 5
+    if dir_info is None:
+        logger.error(f"Cannot parse directory name: {dir_name}")
+        return
     
-    # 算法配置
-    # 注意：所有个性化联邦学习算法使用个性化模型结果（personalized: True）
-    # FedAvg 没有个性化模型，使用全局模型结果（personalized: False）
-    algorithms_config = [
-        {"name": "MESA", "label": "MESA (Ours)", "color": "tab:red", "marker": "o", "personalized": True},
-        {"name": "HiCS", "label": "HiCS", "color": "tab:cyan", "marker": "^", "personalized": True},
-        {"name": "Oort", "label": "Oort", "color": "tab:blue", "marker": "v", "personalized": True},
-        {"name": "PoC", "label": "PoC", "color": "tab:green", "marker": "s", "personalized": True},
-        {"name": "pFedMe", "label": "pFedMe", "color": "tab:orange", "marker": "*", "personalized": True},
-        {"name": "FedAvg", "label": "FedAvg", "color": "tab:purple", "marker": "x", "personalized": False},  # FedAvg 没有个性化模型
-        {"name": "PerAvg", "label": "Per-FedAvg", "color": "tab:brown", "marker": "d", "personalized": True, "beta": 0.001},
-    ]
+    model = dir_info.get('model_name', 'unknown')
+    dataset = dir_info.get('dataset', 'unknown')
+    num_glob_iters = dir_info.get('num_glob_iters', 100)
     
-    results = {}
-    total_times = 5  # 默认实验总次数
+    logger.info(f"Parsed experiment info: model={model}, dataset={dataset}, rounds={num_glob_iters}")
+    
+    # 扫描目录中的结果文件
+    all_files = scan_result_files(result_dir)
+    
+    if not all_files:
+        logger.error("No result files found!")
+        return
+    
+    # 决定使用哪些文件（优先个性化模型，FedAvg 除外）
+    # 对于同一个算法，如果有 _p 版本就用 _p，否则用普通版本
+    algorithms_to_plot = {}
+    
+    for key, file_info in all_files.items():
+        alg = file_info["algorithm"]
+        personalized = file_info["personalized"]
+        
+        # FedAvg 没有个性化模型，直接使用
+        if alg == "FedAvg":
+            if alg not in algorithms_to_plot:
+                algorithms_to_plot[alg] = file_info
+        else:
+            # 其他算法优先使用个性化模型
+            if personalized:
+                algorithms_to_plot[alg] = file_info
+            elif alg not in algorithms_to_plot:
+                algorithms_to_plot[alg] = file_info
     
     # 读取数据
-    for alg in algorithms_config:
-        alg_beta = alg.get("beta", beta)
-        
-        # 优先尝试读取平均后的结果文件 (current_time="avg")
-        filepath = get_result_filepath(
-            model=model, dataset=dataset, num_users=num_users,
-            num_glob_iters=num_glob_iters, total_times=total_times, current_time="avg",
-            lr=lr, beta=alg_beta, lamda=lamda, batch_size=batch_size, 
-            algorithm=alg["name"], local_epochs=local_epochs,
-            K=K, personal_lr=personal_lr, personalized=alg["personalized"]
-        )
-        
-        # 如果平均文件不存在，尝试读取第一次运行的结果 (current_time=0)
-        if not os.path.exists(filepath):
-            filepath = get_result_filepath(
-                model=model, dataset=dataset, num_users=num_users,
-                num_glob_iters=num_glob_iters, total_times=total_times, current_time=0,
-                lr=lr, beta=alg_beta, lamda=lamda, batch_size=batch_size,
-                algorithm=alg["name"], local_epochs=local_epochs,
-                K=K, personal_lr=personal_lr, personalized=alg["personalized"]
-            )
-        
+    results = {}
+    for alg, file_info in algorithms_to_plot.items():
+        filepath = file_info["filepath"]
         test_acc, train_acc, train_loss = read_h5_file(filepath)
         
         if test_acc is not None:
-            results[alg["name"]] = {
+            style = ALGORITHM_STYLES.get(alg, {"label": alg, "color": "gray", "marker": "."})
+            results[alg] = {
                 "test_acc": test_acc,
                 "train_acc": train_acc,
                 "train_loss": train_loss,
-                "config": alg
+                "config": style,
+                "filepath": filepath,
             }
-            logger.info(f"✓ Loaded {alg['name']}: max_acc={test_acc.max():.4f}, final_acc={test_acc[-1]:.4f}")
+            logger.info(f"✓ Loaded {alg}: max_acc={test_acc.max():.4f}, final_acc={test_acc[-1]:.4f} ({os.path.basename(filepath)})")
         else:
-            logger.warning(f"✗ Failed to load {alg['name']}")
+            logger.warning(f"✗ Failed to load {alg}")
     
     if len(results) == 0:
-        logger.error("No data found! Please run experiments first.")
+        logger.error("No data loaded!")
         return
-
-    markevery = num_glob_iters//10 if max_rounds is None else max_rounds//10
+    
+    # 计算标记间隔
+    data_len = len(list(results.values())[0]["test_acc"])
+    markevery = max(data_len // 10, 1) if max_rounds is None else max(max_rounds // 10, 1)
     
     # 绘制测试准确率
     fig1, ax1 = plt.subplots(figsize=(8, 6))
@@ -211,11 +236,11 @@ def plot_comparison(dataset, model, output_dir="./figures", max_rounds=None):
     plt.show()
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="Mnist", choices=["Mnist", "Synthetic", "Cifar10"])
-    parser.add_argument("--model", type=str, default="dnn", choices=["dnn", "mclr", "cnn"])
+    parser = argparse.ArgumentParser(description="Plot comparison from result directory")
+    parser.add_argument("--result_dir", type=str, required=True,
+                        help="Path to result directory (e.g., results/dnn_Mnist_5u_800r_5t_0.005lr_1.0beta_15lam_20bs)")
     parser.add_argument("--output", type=str, default="./figures", help="Output directory for figures")
     parser.add_argument("--max_rounds", type=int, default=None, help="Max rounds to display (default: all)")
     args = parser.parse_args()
     
-    plot_comparison(args.dataset, args.model, args.output, args.max_rounds)
+    plot_from_result_dir(args.result_dir, args.output, args.max_rounds)

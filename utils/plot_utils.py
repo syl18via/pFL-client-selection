@@ -5,51 +5,71 @@ from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 from matplotlib.ticker import StrMethodFormatter
 import os
 from loguru import logger
+from utils.path_utils import build_result_dir, build_result_filename, build_result_filepath, PFEDME_BASED_ALGORITHMS
 plt.rcParams.update({'font.size': 14})
 
-def simple_read_data(alg, model_name="dnn"):
-    filepath = f"./results/{model_name}/{alg}.h5"
-    logger.info(filepath)
+def simple_read_data(model_name, dataset, num_users, num_glob_iters, total_times,
+                     learning_rate, beta, lamda, batch_size, algorithm, local_epochs,
+                     current_time, K=None, personal_learning_rate=None, personalized=False):
+    """使用统一路径工具读取结果文件"""
+    filepath = build_result_filepath(
+        model_name=model_name, dataset=dataset, num_users=num_users,
+        num_glob_iters=num_glob_iters, total_times=total_times, current_time=current_time,
+        learning_rate=learning_rate, beta=beta, lamda=lamda, batch_size=batch_size,
+        algorithm=algorithm, local_epochs=local_epochs,
+        K=K, personal_learning_rate=personal_learning_rate, personalized=personalized
+    )
+    if not os.path.exists(filepath):
+        raise FileNotFoundError(f"File not found: {filepath}")
+    logger.info(f"Reading: {filepath}")
     hf = h5py.File(filepath, 'r')
     rs_glob_acc = np.array(hf.get('rs_glob_acc')[:])
     rs_train_acc = np.array(hf.get('rs_train_acc')[:])
     rs_train_loss = np.array(hf.get('rs_train_loss')[:])
+    hf.close()
     return rs_train_acc, rs_train_loss, rs_glob_acc
 
-def get_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=[], learning_rate=[],beta=[],algorithms_list=[], batch_size=[], dataset="", k= [] , personal_learning_rate = []):
+def get_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=[], learning_rate=[],beta=[],algorithms_list=[], batch_size=[], dataset="", k= [] , personal_learning_rate = [], total_times=5, model_name="dnn"):
+    """读取多个算法的平均结果数据"""
     Numb_Algs = len(algorithms_list)
     train_acc = np.zeros((Numb_Algs, Numb_Glob_Iters))
     train_loss = np.zeros((Numb_Algs, Numb_Glob_Iters))
     glob_acc = np.zeros((Numb_Algs, Numb_Glob_Iters))
     algs_lbl = algorithms_list.copy()
+    
     for i in range(Numb_Algs):
-        string_learning_rate = str(learning_rate[i])  
-        string_learning_rate = string_learning_rate + "_" +str(beta[i]) + "_" +str(lamb[i])
-        if(algorithms_list[i] == "pFedMe" or algorithms_list[i] == "pFedMe_p"):
-            algorithms_list[i] = algorithms_list[i] + "_" + string_learning_rate + "_" + str(num_users) + "u" + "_" + str(batch_size[i]) + "b" + "_" +str(loc_ep1[i]) + "_"+ str(k[i])  + "_"+ str(personal_learning_rate[i])
-        else:
-            algorithms_list[i] = algorithms_list[i] + "_" + string_learning_rate + "_" + str(num_users) + "u" + "_" + str(batch_size[i]) + "b"  "_" +str(loc_ep1[i])
-
-        train_acc[i, :], train_loss[i, :], glob_acc[i, :] = np.array(
-            simple_read_data(dataset +"_"+ algorithms_list[i] + "_avg"))[:, :Numb_Glob_Iters]
-        algs_lbl[i] = algs_lbl[i]
+        alg = algorithms_list[i]
+        K = k[i] if alg in PFEDME_BASED_ALGORITHMS else None
+        plr = personal_learning_rate[i] if alg in PFEDME_BASED_ALGORITHMS else None
+        
+        result = simple_read_data(
+            model_name=model_name, dataset=dataset, num_users=num_users,
+            num_glob_iters=Numb_Glob_Iters, total_times=total_times, current_time="avg",
+            learning_rate=learning_rate[i], beta=beta[i], lamda=lamb[i], batch_size=batch_size[i],
+            algorithm=alg, local_epochs=loc_ep1[i], K=K, personal_learning_rate=plr
+        )
+        if result[0] is not None:
+            train_acc[i, :], train_loss[i, :], glob_acc[i, :] = np.array(result)[:, :Numb_Glob_Iters]
     return glob_acc, train_acc, train_loss
 
 def get_all_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=0, learning_rate=0,beta=0,algorithms="", batch_size=0, dataset="", k= 0 , personal_learning_rate =0 ,times = 5, model_name="dnn"):
+    """读取某个算法多次实验的数据"""
     train_acc = np.zeros((times, Numb_Glob_Iters))
     train_loss = np.zeros((times, Numb_Glob_Iters))
     glob_acc = np.zeros((times, Numb_Glob_Iters))
-    algorithms_list  = [algorithms] * times
+    
+    K = k if algorithms in PFEDME_BASED_ALGORITHMS else None
+    plr = personal_learning_rate if algorithms in PFEDME_BASED_ALGORITHMS else None
+    
     for i in range(times):
-        string_learning_rate = str(learning_rate)  
-        string_learning_rate = string_learning_rate + "_" +str(beta) + "_" +str(lamb)
-        if(algorithms == "pFedMe" or algorithms == "pFedMe_p"):
-            algorithms_list[i] = algorithms_list[i] + "_" + string_learning_rate + "_" + str(num_users) + "u" + "_" + str(batch_size) + "b" + "_" +str(loc_ep1) + "_"+ str(k)  + "_"+ str(personal_learning_rate) +  "_" +str(i) 
-        else:
-            algorithms_list[i] = algorithms_list[i] + "_" + string_learning_rate + "_" + str(num_users) + "u" + "_" + str(batch_size) + "b"  "_" +str(loc_ep1) +  "_" +str(i)
-
-        train_acc[i, :], train_loss[i, :], glob_acc[i, :] = np.array(
-            simple_read_data(dataset + "_" + algorithms_list[i], model_name))[:, :Numb_Glob_Iters]
+        result = simple_read_data(
+            model_name=model_name, dataset=dataset, num_users=num_users,
+            num_glob_iters=Numb_Glob_Iters, total_times=times, current_time=i,
+            learning_rate=learning_rate, beta=beta, lamda=lamb, batch_size=batch_size,
+            algorithm=algorithms, local_epochs=loc_ep1, K=K, personal_learning_rate=plr
+        )
+        if result[0] is not None:
+            train_acc[i, :], train_loss[i, :], glob_acc[i, :] = np.array(result)[:, :Numb_Glob_Iters]
     return glob_acc, train_acc, train_loss
 
 
@@ -78,17 +98,27 @@ def average_data(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb="", learning
     logger.info(f"std: {np.std(max_accurancy)}")
     logger.info(f"Mean: {np.mean(max_accurancy)}")
 
-    # 按模型类型分目录
-    result_dir = f"./results/{model_name}"
+    # 使用统一路径工具构建目录和文件名
+    K = k if algorithms in PFEDME_BASED_ALGORITHMS else None
+    plr = personal_learning_rate if algorithms in PFEDME_BASED_ALGORITHMS else None
+    
+    result_dir = build_result_dir(
+        model_name=model_name, dataset=dataset, num_users=num_users,
+        num_glob_iters=Numb_Glob_Iters, total_times=times,
+        learning_rate=learning_rate, beta=beta, lamda=lamb, batch_size=batch_size
+    )
     os.makedirs(result_dir, exist_ok=True)
     
-    alg = dataset + "_" + algorithms
-    alg = alg + "_" + str(learning_rate) + "_" + str(beta) + "_" + str(lamb) + "_" + str(num_users) + "u" + "_" + str(batch_size) + "b" + "_" + str(loc_ep1)
-    if(algorithms == "pFedMe" or algorithms == "pFedMe_p"):
-        alg = alg + "_" + str(k) + "_" + str(personal_learning_rate)
-    alg = alg + "_" + "avg"
+    # current_time="avg" 表示平均结果
+    alg_filename = build_result_filename(
+        algorithm=algorithms, local_epochs=loc_ep1, current_time="avg",
+        K=K, personal_learning_rate=plr, personalized=False
+    )
+    
     if (len(glob_acc) != 0 &  len(train_acc) & len(train_loss)) :
-        with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
+        filepath = os.path.join(result_dir, alg_filename)
+        logger.info(f"Saving average data to: {filepath}")
+        with h5py.File(filepath, 'w') as hf:
             hf.create_dataset('rs_glob_acc', data=glob_acc_data)
             hf.create_dataset('rs_train_acc', data=train_acc_data)
             hf.create_dataset('rs_train_loss', data=train_loss_data)

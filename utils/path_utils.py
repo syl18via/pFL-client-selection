@@ -119,17 +119,20 @@ def parse_result_dir(dir_name):
     try:
         parts = dir_name.split('_')
         # 预期格式: model_dataset_Xu_Xr_Xt_Xlr_Xbeta_Xlam_Xbs
+        if len(parts) < 2:
+            return None
+            
         params = {
             'model_name': parts[0],
             'dataset': parts[1],
         }
         
         for part in parts[2:]:
-            if part.endswith('u'):
+            if part.endswith('u') and not part.endswith('lu'):
                 params['num_users'] = int(part[:-1])
-            elif part.endswith('r'):
+            elif part.endswith('r') and not part.endswith('lr'):
                 params['num_glob_iters'] = int(part[:-1])
-            elif part.endswith('t'):
+            elif part.endswith('t') and len(part) > 1 and part[:-1].isdigit():
                 params['total_times'] = int(part[:-1])
             elif part.endswith('lr'):
                 params['learning_rate'] = float(part[:-2])
@@ -141,7 +144,9 @@ def parse_result_dir(dir_name):
                 params['batch_size'] = int(part[:-2])
         
         return params
-    except (IndexError, ValueError):
+    except (IndexError, ValueError) as e:
+        import traceback
+        traceback.print_exc()
         return None
 
 
