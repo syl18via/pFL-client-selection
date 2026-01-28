@@ -149,9 +149,9 @@ class HiCS(pFedMe):
     """HiCS: Hierarchical Clustering-based Client Selection for Federated Learning"""
     
     def __init__(self, device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                 local_epochs, optimizer, num_users, K, personal_learning_rate, times):
+                 local_epochs, optimizer, num_users, K, personal_learning_rate, current_time, total_times=1):
         super().__init__(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                         local_epochs, optimizer, num_users, K, personal_learning_rate, times)
+                         local_epochs, optimizer, num_users, K, personal_learning_rate, current_time, total_times)
         
         # HiCS parameters
         if dataset in ["Cifar10", "cifar", "FedCIFAR100"]:

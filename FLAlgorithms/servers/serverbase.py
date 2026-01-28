@@ -3,13 +3,14 @@ import os
 import numpy as np
 import h5py
 from utils.model_utils import Metrics
+from utils.path_utils import build_result_dir, build_result_filename
 import copy
 import time
 from loguru import logger
 
 class Server:
     def __init__(self, device, dataset,algorithm, model, batch_size, learning_rate ,beta, lamda,
-                 num_glob_iters, local_epochs, optimizer,num_users, times):
+                 num_glob_iters, local_epochs, optimizer,num_users, current_time, total_times=1):
 
         # Set up the main attributes
         self.device = device
@@ -33,7 +34,8 @@ class Server:
         self.lamda = lamda
         self.algorithm = algorithm
         self.rs_train_acc, self.rs_train_loss, self.rs_glob_acc,self.rs_train_acc_per, self.rs_train_loss_per, self.rs_glob_acc_per = [], [], [], [], [], []
-        self.times = times
+        self.current_time = current_time  # 当前是第几次实验 (用于文件名)
+        self.total_times = total_times    # 实验总次数 (用于目录名)
         
         # Time tracking for Accuracy vs. Wall-clock Time plots
         self.wall_clock_times = []  # Cumulative wall-clock time at each round
@@ -144,15 +146,19 @@ class Server:
             
     # Save loss, accurancy to h5 fiel
     def save_results(self):
-        # 按模型类型分目录: results/{model_name}/
-        result_dir = f"./results/{self.model_name}"
+        # 使用统一的路径构建工具
+        K = getattr(self, 'K', None)
+        personal_lr = getattr(self, 'personal_learning_rate', None)
+        
+        # 目录名使用 total_times（实验总次数）
+        result_dir = build_result_dir(
+            self.model_name, self.dataset, self.num_users, self.num_glob_iters, self.total_times,
+            self.learning_rate, self.beta, self.lamda, self.batch_size
+        )
         os.makedirs(result_dir, exist_ok=True)
         
-        alg = self.dataset + "_" + self.algorithm
-        alg = alg + "_" + str(self.learning_rate) + "_" + str(self.beta) + "_" + str(self.lamda) + "_" + str(self.num_users) + "u" + "_" + str(self.batch_size) + "b" + "_" + str(self.local_epochs)
-        if(self.algorithm == "pFedMe" or self.algorithm == "pFedMe_p"):
-            alg = alg + "_" + str(self.K) + "_" + str(self.personal_learning_rate)
-        alg = alg + "_" + str(self.times)
+        # 文件名使用 current_time（当前次数）
+        alg = build_result_filename(self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=False)[:-3]  # 去掉.h5后缀
         if (len(self.rs_glob_acc) != 0 &  len(self.rs_train_acc) & len(self.rs_train_loss)) :
             with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc)
@@ -184,13 +190,9 @@ class Server:
                 hf.close()
         
         # store persionalized value
-        alg = self.dataset + "_" + self.algorithm + "_p"
-        alg = alg  + "_" + str(self.learning_rate) + "_" + str(self.beta) + "_" + str(self.lamda) + "_" + str(self.num_users) + "u" + "_" + str(self.batch_size) + "b"+ "_" + str(self.local_epochs)
-        if(self.algorithm == "pFedMe" or self.algorithm == "pFedMe_p"):
-            alg = alg + "_" + str(self.K) + "_" + str(self.personal_learning_rate)
-        alg = alg + "_" + str(self.times)
+        alg_p = build_result_filename(self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=True)[:-3]  # 去掉.h5后缀
         if (len(self.rs_glob_acc_per) != 0 &  len(self.rs_train_acc_per) & len(self.rs_train_loss_per)) :
-            with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
+            with h5py.File(f"{result_dir}/{alg_p}.h5", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc_per)
                 hf.create_dataset('rs_train_acc', data=self.rs_train_acc_per)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss_per)

@@ -5,9 +5,9 @@ from FLAlgorithms.servers.serverpFedMe import pFedMe
 
 class PoC(pFedMe):
     def __init__(self, device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                 local_epochs, optimizer, num_users, K, personal_learning_rate, times):
+                 local_epochs, optimizer, num_users, K, personal_learning_rate, current_time, total_times=1):
         super().__init__(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                         local_epochs, optimizer, num_users, K, personal_learning_rate, times)
+                         local_epochs, optimizer, num_users, K, personal_learning_rate, current_time, total_times)
         
         # d: 候选集大小 
         self.d = max(int(self.num_users * 1.5), len(self.users)) 

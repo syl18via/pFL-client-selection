@@ -5,9 +5,9 @@ from FLAlgorithms.servers.serverpFedMe import pFedMe
 
 class Oort(pFedMe):
     def __init__(self, device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                 local_epochs, optimizer, num_users, K, personal_learning_rate, times):
+                 local_epochs, optimizer, num_users, K, personal_learning_rate, current_time, total_times=1):
         super().__init__(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                         local_epochs, optimizer, num_users, K, personal_learning_rate, times)
+                         local_epochs, optimizer, num_users, K, personal_learning_rate, current_time, total_times)
         
         # Oort 需要维护历史 Utility
         self.client_utilities = np.zeros(len(self.users)) + 1e-5  # 初始化防止除零

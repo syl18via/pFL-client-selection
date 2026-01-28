@@ -12,9 +12,9 @@ import numpy as np
 
 class FedAvg(Server):
     def __init__(self, device, dataset,algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                 local_epochs, optimizer, num_users, times):
+                 local_epochs, optimizer, num_users, current_time, total_times=1):
         super().__init__(device, dataset,algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                         local_epochs, optimizer, num_users, times)
+                         local_epochs, optimizer, num_users, current_time, total_times)
 
         # Initialize data for all  users
         data = read_data(dataset)

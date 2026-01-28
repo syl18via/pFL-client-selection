@@ -4,12 +4,16 @@
 用法: python scripts/plot_comparison.py --dataset Mnist --model dnn
 """
 
+import sys
+sys.path.insert(0, '.')  # 确保能导入项目模块
+
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import os
 from loguru import logger
+from utils.path_utils import build_result_dir, build_result_filename, build_result_filepath
 
 plt.rcParams.update({'font.size': 12})
 plt.rcParams['figure.figsize'] = (8, 6)
@@ -36,23 +40,22 @@ def smooth(data, window_len=20):
     y = np.convolve(w/w.sum(), s, mode='valid')
     return y[window_len-1:]
 
-def build_filename(dataset, algorithm, lr, beta, lamda, num_users, batch_size, local_epochs, 
-                   K=None, personal_lr=None, times=None, personalized=False, averaged=False):
-    """构建结果文件名
-    格式: {dataset}_{algorithm}[_p]_{lr}_{beta}_{lamda}_{num_users}u_{batch_size}b_{local_epochs}[_{K}_{personal_lr}]_{times|avg}.h5
+def get_result_filepath(model, dataset, num_users, num_glob_iters, total_times, current_time,
+                        lr, beta, lamda, batch_size, algorithm, local_epochs, 
+                        K=None, personal_lr=None, personalized=False):
+    """获取结果文件的完整路径 (使用统一的路径工具)
+    
+    Args:
+        total_times: 实验总次数 (用于目录名)
+        current_time: 当前实验次数 (int 或 "avg"，用于文件名)
     """
-    alg_name = algorithm + ("_p" if personalized else "")
-    name = f"{dataset}_{alg_name}_{lr}_{beta}_{lamda}_{num_users}u_{batch_size}b_{local_epochs}"
-    
-    if algorithm in ["pFedMe"] and K is not None:
-        name += f"_{K}_{personal_lr}"
-    
-    if averaged:
-        name += "_avg"
-    elif times is not None:
-        name += f"_{times}"
-    
-    return name + ".h5"
+    return build_result_filepath(
+        model_name=model, dataset=dataset, num_users=num_users, 
+        num_glob_iters=num_glob_iters, total_times=total_times, current_time=current_time,
+        learning_rate=lr, beta=beta, lamda=lamda, batch_size=batch_size,
+        algorithm=algorithm, local_epochs=local_epochs, 
+        K=K, personal_learning_rate=personal_lr, personalized=personalized
+    )
 
 def plot_comparison(dataset, model, output_dir="./figures", max_rounds=None):
     """绘制对比图
@@ -109,28 +112,30 @@ def plot_comparison(dataset, model, output_dir="./figures", max_rounds=None):
     ]
     
     results = {}
-    
-    # 按模型类型分目录
-    result_dir = f"./results/{model}"
+    total_times = 5  # 默认实验总次数
     
     # 读取数据
     for alg in algorithms_config:
         alg_beta = alg.get("beta", beta)
         
-        # 尝试读取平均后的结果文件
-        filename = build_filename(
-            dataset, alg["name"], lr, alg_beta, lamda, num_users, batch_size, local_epochs,
-            K=K, personal_lr=personal_lr, personalized=alg["personalized"], averaged=True
+        # 优先尝试读取平均后的结果文件 (current_time="avg")
+        filepath = get_result_filepath(
+            model=model, dataset=dataset, num_users=num_users,
+            num_glob_iters=num_glob_iters, total_times=total_times, current_time="avg",
+            lr=lr, beta=alg_beta, lamda=lamda, batch_size=batch_size, 
+            algorithm=alg["name"], local_epochs=local_epochs,
+            K=K, personal_lr=personal_lr, personalized=alg["personalized"]
         )
-        filepath = f"./results/{filename}"
         
-        # 如果没有平均文件，尝试读取第一次运行的结果
+        # 如果平均文件不存在，尝试读取第一次运行的结果 (current_time=0)
         if not os.path.exists(filepath):
-            filename = build_filename(
-                dataset, alg["name"], lr, alg_beta, lamda, num_users, batch_size, local_epochs,
-                K=K, personal_lr=personal_lr, times=0, personalized=alg["personalized"]
+            filepath = get_result_filepath(
+                model=model, dataset=dataset, num_users=num_users,
+                num_glob_iters=num_glob_iters, total_times=total_times, current_time=0,
+                lr=lr, beta=alg_beta, lamda=lamda, batch_size=batch_size,
+                algorithm=alg["name"], local_epochs=local_epochs,
+                K=K, personal_lr=personal_lr, personalized=alg["personalized"]
             )
-            filepath = f"{result_dir}/{filename}"
         
         test_acc, train_acc, train_loss = read_h5_file(filepath)
         

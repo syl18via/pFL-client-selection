@@ -7,10 +7,10 @@ from utils.model_utils import read_data, read_user_data
 
 class MESA(pFedMe):
     def __init__(self, device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                 local_epochs, optimizer, num_users, K, personal_learning_rate, times):
+                 local_epochs, optimizer, num_users, K, personal_learning_rate, current_time, total_times=1):
         # 调用父类初始化
         super().__init__(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-                         local_epochs, optimizer, num_users, K, personal_learning_rate, times)
+                         local_epochs, optimizer, num_users, K, personal_learning_rate, current_time, total_times)
 
         # === MESA 特有初始化 ===
         # 1. 重新生成 users 列表，使用 UserMESA 替代 UserpFedMe
