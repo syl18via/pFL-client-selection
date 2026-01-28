@@ -37,11 +37,13 @@ def smooth(data, window_len=20):
 
 def build_filename(dataset, algorithm, lr, beta, lamda, num_users, batch_size, local_epochs, 
                    K=None, personal_lr=None, times=None, personalized=False, averaged=False):
-    """构建结果文件名"""
+    """构建结果文件名
+    格式: {dataset}_{algorithm}[_p]_{lr}_{beta}_{lamda}_{num_users}u_{batch_size}b_{local_epochs}[_{K}_{personal_lr}]_{times|avg}.h5
+    """
     alg_name = algorithm + ("_p" if personalized else "")
     name = f"{dataset}_{alg_name}_{lr}_{beta}_{lamda}_{num_users}u_{batch_size}b_{local_epochs}"
     
-    if algorithm in ["pFedMe", "MESA", "Oort", "PoC"] and K is not None:
+    if algorithm in ["pFedMe"] and K is not None:
         name += f"_{K}_{personal_lr}"
     
     if averaged:
@@ -90,15 +92,18 @@ def plot_comparison(dataset, model, output_dir="./figures"):
     
     # 算法配置
     algorithms_config = [
-        {"name": "MESA", "label": "MESA (Ours)", "color": "tab:red", "marker": "o", "personalized": True},
-        {"name": "Oort", "label": "Oort", "color": "tab:blue", "marker": "v", "personalized": True},
-        {"name": "PoC", "label": "PoC", "color": "tab:green", "marker": "s", "personalized": True},
+        {"name": "MESA", "label": "MESA (Ours)", "color": "tab:red", "marker": "o", "personalized": False},
+        {"name": "Oort", "label": "Oort", "color": "tab:blue", "marker": "v", "personalized": False},
+        {"name": "PoC", "label": "PoC", "color": "tab:green", "marker": "s", "personalized": False},
         {"name": "pFedMe", "label": "pFedMe", "color": "tab:orange", "marker": "*", "personalized": True},
         {"name": "FedAvg", "label": "FedAvg", "color": "tab:purple", "marker": "x", "personalized": False},
         {"name": "PerAvg", "label": "Per-FedAvg", "color": "tab:brown", "marker": "d", "personalized": True, "beta": 0.001},
     ]
     
     results = {}
+    
+    # 按模型类型分目录
+    result_dir = f"./results/{model}"
     
     # 读取数据
     for alg in algorithms_config:
@@ -117,7 +122,7 @@ def plot_comparison(dataset, model, output_dir="./figures"):
                 dataset, alg["name"], lr, alg_beta, lamda, num_users, batch_size, local_epochs,
                 K=K, personal_lr=personal_lr, times=0, personalized=alg["personalized"]
             )
-            filepath = f"./results/{filename}"
+            filepath = f"{result_dir}/{filename}"
         
         test_acc, train_acc, train_loss = read_h5_file(filepath)
         

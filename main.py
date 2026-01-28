@@ -23,27 +23,30 @@ def main(dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_
 
     # Get device status: Check GPU or CPU
     device = torch.device("cuda:{}".format(gpu) if torch.cuda.is_available() and gpu != -1 else "cpu")
+    
+    # 保存原始 model 名称，用于文件命名
+    model_name = model
 
     for i in range(times):
         print("---------------Running time:------------",i)
-        # Generate model
-        if(model == "mclr"):
+        # Generate model (返回元组: (model_object, model_name))
+        if(model_name == "mclr"):
             if(dataset == "Mnist"):
-                model = Mclr_Logistic().to(device), model
+                model = Mclr_Logistic().to(device), model_name
             else:
-                model = Mclr_Logistic(60,10).to(device), model
+                model = Mclr_Logistic(60,10).to(device), model_name
                 
-        if(model == "cnn"):
+        if(model_name == "cnn"):
             if(dataset == "Mnist"):
-                model = Net().to(device), model
+                model = Net().to(device), model_name
             elif(dataset == "Cifar10"):
-                model = CNNCifar(10).to(device), model
+                model = CNNCifar(10).to(device), model_name
             
-        if(model == "dnn"):
+        if(model_name == "dnn"):
             if(dataset == "Mnist"):
-                model = DNN().to(device), model
+                model = DNN().to(device), model_name
             else: 
-                model = DNN(60,20,10).to(device), model
+                model = DNN(60,20,10).to(device), model_name
 
         # select algorithm
         if(algorithm == "FedAvg"):
@@ -74,8 +77,8 @@ def main(dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_
     if(algorithm == "PerAvg"):
         algorithm == "PerAvg_p"
     if(algorithm == "pFedMe"):
-        average_data(num_users=numusers, loc_ep1=local_epochs, Numb_Glob_Iters=num_glob_iters, lamb=lamda,learning_rate=learning_rate, beta = beta, algorithms="pFedMe_p", batch_size=batch_size, dataset=dataset, k = K, personal_learning_rate = personal_learning_rate,times = times)
-    average_data(num_users=numusers, loc_ep1=local_epochs, Numb_Glob_Iters=num_glob_iters, lamb=lamda,learning_rate=learning_rate, beta = beta, algorithms=algorithm, batch_size=batch_size, dataset=dataset, k = K, personal_learning_rate = personal_learning_rate,times = times)
+        average_data(num_users=numusers, loc_ep1=local_epochs, Numb_Glob_Iters=num_glob_iters, lamb=lamda,learning_rate=learning_rate, beta = beta, algorithms="pFedMe_p", batch_size=batch_size, dataset=dataset, k = K, personal_learning_rate = personal_learning_rate,times = times, model_name=model_name)
+    average_data(num_users=numusers, loc_ep1=local_epochs, Numb_Glob_Iters=num_glob_iters, lamb=lamda,learning_rate=learning_rate, beta = beta, algorithms=algorithm, batch_size=batch_size, dataset=dataset, k = K, personal_learning_rate = personal_learning_rate,times = times, model_name=model_name)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

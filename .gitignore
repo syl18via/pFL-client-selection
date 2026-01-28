@@ -134,3 +134,5 @@ data/*/data/test/
 data/*/data/openml/
 models/
 logs/
+figures/
+results/
