@@ -53,8 +53,12 @@ def build_filename(dataset, algorithm, lr, beta, lamda, num_users, batch_size, l
     
     return name + ".h5"
 
-def plot_comparison(dataset, model, output_dir="./figures"):
-    """绘制对比图"""
+def plot_comparison(dataset, model, output_dir="./figures", max_rounds=None):
+    """绘制对比图
+    
+    Args:
+        max_rounds: 横坐标最大值，None 表示显示全部轮次
+    """
     os.makedirs(output_dir, exist_ok=True)
     
     # 配置参数 - 根据数据集调整
@@ -93,9 +97,10 @@ def plot_comparison(dataset, model, output_dir="./figures"):
     # 算法配置
     algorithms_config = [
         {"name": "MESA", "label": "MESA (Ours)", "color": "tab:red", "marker": "o", "personalized": False},
+        {"name": "HiCS", "label": "HiCS", "color": "tab:cyan", "marker": "^", "personalized": True},
         {"name": "Oort", "label": "Oort", "color": "tab:blue", "marker": "v", "personalized": False},
         {"name": "PoC", "label": "PoC", "color": "tab:green", "marker": "s", "personalized": False},
-        {"name": "pFedMe", "label": "pFedMe", "color": "tab:orange", "marker": "*", "personalized": True},
+        {"name": "pFedMe", "label": "pFedMe", "color": "tab:orange", "marker": "*", "personalized": False},
         {"name": "FedAvg", "label": "FedAvg", "color": "tab:purple", "marker": "x", "personalized": False},
         {"name": "PerAvg", "label": "Per-FedAvg", "color": "tab:brown", "marker": "d", "personalized": True, "beta": 0.001},
     ]
@@ -140,6 +145,8 @@ def plot_comparison(dataset, model, output_dir="./figures"):
     if len(results) == 0:
         print("No data found! Please run experiments first.")
         return
+
+    markevery = num_glob_iters//10 if max_rounds is None else max_rounds//10
     
     # 绘制测试准确率
     fig1, ax1 = plt.subplots(figsize=(8, 6))
@@ -147,13 +154,15 @@ def plot_comparison(dataset, model, output_dir="./figures"):
         cfg = data["config"]
         smoothed = smooth(data["test_acc"])
         ax1.plot(smoothed, label=cfg["label"], color=cfg["color"], 
-                marker=cfg["marker"], markevery=num_glob_iters//10, markersize=6, linewidth=1.5)
+                marker=cfg["marker"], markevery=markevery, markersize=6, linewidth=1.5)
     
     ax1.set_xlabel('Global Rounds')
     ax1.set_ylabel('Test Accuracy')
     ax1.set_title(f'{dataset} - {model.upper()} - Test Accuracy')
     ax1.legend(loc='lower right')
     ax1.grid(True, alpha=0.3)
+    if max_rounds is not None:
+        ax1.set_xlim(0, max_rounds)
     
     fig1.tight_layout()
     fig1.savefig(f"{output_dir}/{dataset}_{model}_test_acc.pdf", bbox_inches="tight")
@@ -166,13 +175,15 @@ def plot_comparison(dataset, model, output_dir="./figures"):
         cfg = data["config"]
         smoothed = smooth(data["train_loss"])
         ax2.plot(smoothed, label=cfg["label"], color=cfg["color"],
-                marker=cfg["marker"], markevery=num_glob_iters//10, markersize=6, linewidth=1.5)
+                marker=cfg["marker"], markevery=markevery, markersize=6, linewidth=1.5)
     
     ax2.set_xlabel('Global Rounds')
     ax2.set_ylabel('Training Loss')
     ax2.set_title(f'{dataset} - {model.upper()} - Training Loss')
     ax2.legend(loc='upper right')
     ax2.grid(True, alpha=0.3)
+    if max_rounds is not None:
+        ax2.set_xlim(0, max_rounds)
     
     fig2.tight_layout()
     fig2.savefig(f"{output_dir}/{dataset}_{model}_train_loss.pdf", bbox_inches="tight")
@@ -196,6 +207,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="Mnist", choices=["Mnist", "Synthetic", "Cifar10"])
     parser.add_argument("--model", type=str, default="dnn", choices=["dnn", "mclr", "cnn"])
     parser.add_argument("--output", type=str, default="./figures", help="Output directory for figures")
+    parser.add_argument("--max_rounds", type=int, default=None, help="Max rounds to display (default: all)")
     args = parser.parse_args()
     
-    plot_comparison(args.dataset, args.model, args.output)
+    plot_comparison(args.dataset, args.model, args.output, args.max_rounds)

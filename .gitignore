@@ -132,6 +132,10 @@ dmypy.json
 data/*/data/train/
 data/*/data/test/
 data/*/data/openml/
+data/*/data/cifar-10-batches-py/
+data/cifar-10-batches-py/
+data/cifar-10-python.tar.gz
+data/Cifar10/data/cifar-10-python.tar.gz
 models/
 logs/
 figures/
