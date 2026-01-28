@@ -1,6 +1,6 @@
 #!/bin/bash
 # MNIST 数据集对比实验脚本
-# 运行 MESA, Oort, PoC, pFedMe, FedAvg, PerAvg 算法
+# 运行 MESA, Oort, PoC, HiCS, pFedMe, FedAvg, PerAvg 算法
 
 set -e  # 出错时停止
 
@@ -42,7 +42,7 @@ PERSONAL_LR=0.09
 BETA=1
 
 # MESA (你的算法)
-echo "[1/6] Running MESA... (log: $LOG_DIR/dnn_MESA.log)"
+echo "[1/7] Running MESA... (log: $LOG_DIR/dnn_MESA.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
@@ -51,7 +51,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     > "$LOG_DIR/dnn_MESA.log" 2>&1
 
 # Oort
-echo "[2/6] Running Oort... (log: $LOG_DIR/dnn_Oort.log)"
+echo "[2/7] Running Oort... (log: $LOG_DIR/dnn_Oort.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
@@ -60,7 +60,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     > "$LOG_DIR/dnn_Oort.log" 2>&1
 
 # PoC
-echo "[3/6] Running PoC... (log: $LOG_DIR/dnn_PoC.log)"
+echo "[3/7] Running PoC... (log: $LOG_DIR/dnn_PoC.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
@@ -68,8 +68,17 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
     > "$LOG_DIR/dnn_PoC.log" 2>&1
 
+# HiCS
+echo "[4/7] Running HiCS... (log: $LOG_DIR/dnn_HiCS.log)"
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+    --local_epochs $LOCAL_EPOCHS --algorithm HiCS \
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_HiCS.log" 2>&1
+
 # pFedMe
-echo "[4/6] Running pFedMe... (log: $LOG_DIR/dnn_pFedMe.log)"
+echo "[5/7] Running pFedMe... (log: $LOG_DIR/dnn_pFedMe.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
@@ -78,7 +87,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     > "$LOG_DIR/dnn_pFedMe.log" 2>&1
 
 # FedAvg
-echo "[5/6] Running FedAvg... (log: $LOG_DIR/dnn_FedAvg.log)"
+echo "[6/7] Running FedAvg... (log: $LOG_DIR/dnn_FedAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta $BETA --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
@@ -86,7 +95,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     > "$LOG_DIR/dnn_FedAvg.log" 2>&1
 
 # PerAvg
-echo "[6/6] Running PerAvg... (log: $LOG_DIR/dnn_PerAvg.log)"
+echo "[7/7] Running PerAvg... (log: $LOG_DIR/dnn_PerAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta 0.001 --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
@@ -109,7 +118,7 @@ PERSONAL_LR=0.1
 BETA=1
 
 # MESA
-echo "[1/6] Running MESA (Convex)... (log: $LOG_DIR/mclr_MESA.log)"
+echo "[1/7] Running MESA (Convex)... (log: $LOG_DIR/mclr_MESA.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
@@ -118,7 +127,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     > "$LOG_DIR/mclr_MESA.log" 2>&1
 
 # Oort
-echo "[2/6] Running Oort (Convex)... (log: $LOG_DIR/mclr_Oort.log)"
+echo "[2/7] Running Oort (Convex)... (log: $LOG_DIR/mclr_Oort.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
@@ -127,7 +136,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     > "$LOG_DIR/mclr_Oort.log" 2>&1
 
 # PoC
-echo "[3/6] Running PoC (Convex)... (log: $LOG_DIR/mclr_PoC.log)"
+echo "[3/7] Running PoC (Convex)... (log: $LOG_DIR/mclr_PoC.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
@@ -135,8 +144,17 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
     > "$LOG_DIR/mclr_PoC.log" 2>&1
 
+# HiCS
+echo "[4/7] Running HiCS (Convex)... (log: $LOG_DIR/mclr_HiCS.log)"
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+    --local_epochs $LOCAL_EPOCHS --algorithm HiCS \
+    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_HiCS.log" 2>&1
+
 # pFedMe
-echo "[4/6] Running pFedMe (Convex)... (log: $LOG_DIR/mclr_pFedMe.log)"
+echo "[5/7] Running pFedMe (Convex)... (log: $LOG_DIR/mclr_pFedMe.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
@@ -145,7 +163,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     > "$LOG_DIR/mclr_pFedMe.log" 2>&1
 
 # FedAvg
-echo "[5/6] Running FedAvg (Convex)... (log: $LOG_DIR/mclr_FedAvg.log)"
+echo "[6/7] Running FedAvg (Convex)... (log: $LOG_DIR/mclr_FedAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta $BETA --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \
@@ -153,7 +171,7 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     > "$LOG_DIR/mclr_FedAvg.log" 2>&1
 
 # PerAvg
-echo "[6/6] Running PerAvg (Convex)... (log: $LOG_DIR/mclr_PerAvg.log)"
+echo "[7/7] Running PerAvg (Convex)... (log: $LOG_DIR/mclr_PerAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
     --learning_rate $LR --beta 0.001 --lamda $LAMDA \
     --num_global_iters $NUM_GLOBAL_ITERS --local_epochs $LOCAL_EPOCHS \

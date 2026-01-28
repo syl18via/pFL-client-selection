@@ -370,7 +370,7 @@ class HiCS(pFedMe):
         self.before_train(n_samples_dict, self.model)
         
         for glob_iter in range(self.num_glob_iters):
-            print("-------------HiCS Round number: ", glob_iter, " -------------")
+            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (HiCS)-------------")
             
             # Store previous global model before sending parameters
             self.before_step(self.model)
@@ -404,4 +404,5 @@ class HiCS(pFedMe):
             self.persionalized_aggregate_parameters()
 
         self.save_results()
-        self.save_model()
+        if save_model:
+            self.save_model()

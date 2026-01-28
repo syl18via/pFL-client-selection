@@ -67,6 +67,15 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
 """))
 
+# HiCS
+TASKS.append(("DNN-HiCS", "dnn_HiCS.log", f"""
+python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
+    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+    --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
+    --local_epochs {LOCAL_EPOCHS} --algorithm HiCS \
+    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+"""))
+
 # pFedMe
 TASKS.append(("DNN-pFedMe", "dnn_pFedMe.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
@@ -122,6 +131,15 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
     --local_epochs {LOCAL_EPOCHS} --algorithm PoC \
+    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+"""))
+
+# HiCS
+TASKS.append(("MCLR-HiCS", "mclr_HiCS.log", f"""
+python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
+    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+    --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
+    --local_epochs {LOCAL_EPOCHS} --algorithm HiCS \
     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
 """))
 
