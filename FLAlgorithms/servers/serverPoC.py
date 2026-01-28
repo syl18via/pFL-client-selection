@@ -48,6 +48,10 @@ class PoC(pFedMe):
             
             self.selected_users = [self.users[i] for i in selected_indices]
 
+            # Record selected client losses (for Effectiveness of Selection analysis)
+            # Note: PoC selects based on probe losses, but we record current loss for consistency with other algorithms
+            self.record_selected_client_losses(selected_indices.tolist())
+
             # 4. 训练选中的用户
             for user in self.selected_users:
                 user.train(self.local_epochs)

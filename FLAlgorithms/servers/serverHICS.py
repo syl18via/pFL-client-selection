@@ -389,6 +389,9 @@ class HiCS(pFedMe):
             self.selected_users = [self.users[i] for i in selected_indices]
             print(f"Selected Clients: {selected_indices}")
 
+            # Record selected client losses before training (for Effectiveness of Selection analysis)
+            self.record_selected_client_losses(selected_indices)
+
             # Train selected users
             local_models = []
             for user_idx in selected_indices:

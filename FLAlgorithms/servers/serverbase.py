@@ -39,6 +39,10 @@ class Server:
         self.round_times = []  # Time taken for each round
         self.total_elapsed_time = 0.0  # Total elapsed time
         
+        # Selected client loss tracking for Effectiveness of Selection analysis
+        self.selected_client_losses = []  # List of lists: each round contains losses of selected clients
+        self.selected_client_indices = []  # List of lists: each round contains indices of selected clients
+        
         # Initialize the server's grads to zeros
         #for param in self.model.parameters():
         #    param.data = torch.zeros_like(param.data)
@@ -157,6 +161,25 @@ class Server:
                 if len(self.wall_clock_times) > 0:
                     hf.create_dataset('wall_clock_times', data=self.wall_clock_times)
                     hf.create_dataset('round_times', data=self.round_times)
+                # Save selected client losses for Effectiveness of Selection analysis
+                if len(self.selected_client_losses) > 0:
+                    # Convert list of lists to numpy array (padding with NaN for variable lengths)
+                    max_len = max(len(losses) for losses in self.selected_client_losses) if self.selected_client_losses else 0
+                    if max_len > 0:
+                        padded_losses = []
+                        for losses in self.selected_client_losses:
+                            padded = losses + [np.nan] * (max_len - len(losses))
+                            padded_losses.append(padded)
+                        hf.create_dataset('selected_client_losses', data=np.array(padded_losses))
+                        # Also save indices (as strings, padded with empty strings)
+                        padded_indices = []
+                        for indices in self.selected_client_indices:
+                            # Convert to strings and pad
+                            str_indices = [str(idx) for idx in indices]
+                            padded = str_indices + [''] * (max_len - len(str_indices))
+                            padded_indices.append(padded)
+                        # Save as variable-length string array
+                        hf.create_dataset('selected_client_indices', data=np.array(padded_indices, dtype='S'))
                 hf.close()
         
         # store persionalized value
@@ -174,6 +197,22 @@ class Server:
                 if len(self.wall_clock_times) > 0:
                     hf.create_dataset('wall_clock_times', data=self.wall_clock_times)
                     hf.create_dataset('round_times', data=self.round_times)
+                # Save selected client losses (same as global model)
+                if len(self.selected_client_losses) > 0:
+                    max_len = max(len(losses) for losses in self.selected_client_losses) if self.selected_client_losses else 0
+                    if max_len > 0:
+                        padded_losses = []
+                        for losses in self.selected_client_losses:
+                            padded = losses + [np.nan] * (max_len - len(losses))
+                            padded_losses.append(padded)
+                        hf.create_dataset('selected_client_losses', data=np.array(padded_losses))
+                        # Save indices as strings
+                        padded_indices = []
+                        for indices in self.selected_client_indices:
+                            str_indices = [str(idx) for idx in indices]
+                            padded = str_indices + [''] * (max_len - len(str_indices))
+                            padded_indices.append(padded)
+                        hf.create_dataset('selected_client_indices', data=np.array(padded_indices, dtype='S'))
                 hf.close()
 
     def test(self):
@@ -238,6 +277,65 @@ class Server:
         self.round_times.append(round_time)
         self.total_elapsed_time += round_time
         self.wall_clock_times.append(self.total_elapsed_time)
+    
+    def record_selected_client_losses(self, selected_indices=None):
+        """Record losses of selected clients for Effectiveness of Selection analysis
+        
+        Args:
+            selected_indices: List of selected client indices (can be integer indices or user objects).
+                             If None, uses self.selected_users
+        """
+        if selected_indices is None:
+            # Get indices from selected_users
+            selected_indices = [user.id for user in self.selected_users]
+        
+        round_losses = []
+        round_indices = []
+        
+        for idx in selected_indices:
+            # Find the user
+            user = None
+            
+            # Handle different input types
+            if hasattr(idx, 'id'):
+                # idx is a user object
+                user = idx
+                idx = user.id
+            elif isinstance(idx, (int, np.integer)):
+                # idx is an integer index (position in self.users)
+                if 0 <= idx < len(self.users):
+                    user = self.users[idx]
+            else:
+                # idx might be user id (string or other type), find by id
+                for u in self.users:
+                    if str(u.id) == str(idx):
+                        user = u
+                        idx = u.id
+                        break
+            
+            if user is not None:
+                # Get loss for this user (before training, to show selection criteria)
+                try:
+                    _, loss, _ = user.train_error_and_loss()
+                    if hasattr(loss, 'item'):
+                        loss = loss.item()
+                    elif hasattr(loss, 'detach'):
+                        loss = loss.detach().item()
+                    elif isinstance(loss, (int, float)):
+                        loss = float(loss)
+                    else:
+                        loss = float(loss)
+                    
+                    round_losses.append(loss)
+                    # Store index as string for consistency
+                    round_indices.append(str(idx))
+                except Exception as e:
+                    print(f"Warning: Failed to get loss for user {idx}: {e}")
+                    continue
+        
+        if len(round_losses) > 0:
+            self.selected_client_losses.append(round_losses)
+            self.selected_client_indices.append(round_indices)
     
     def evaluate(self):
         stats = self.test()  

@@ -54,12 +54,22 @@ class MESA(pFedMe):
             print(f"Selected Clients: {selected_indices}")
 
             # === MESA 核心逻辑 3: 只训练被选中的人 & 更新 Scoreboard ===
+            # Record proximal gaps (MESA-specific metric) for selected clients
+            # MESA uses proximal gap as the selection metric, so we record it after training
+            selected_proximal_gaps = []
             for user_idx in selected_indices:
                 user = self.users[user_idx]
-                # UserMESA.train 返回 (loss, metric)
+                # UserMESA.train 返回 (loss, metric) where metric is proximal gap
                 _, metric_val = user.train(self.local_epochs)
                 # 更新历史分数
                 self.V[user_idx] = metric_val
+                selected_proximal_gaps.append(float(metric_val))
+            
+            # Store proximal gaps as "losses" for MESA (more meaningful than loss for selection analysis)
+            # This shows that MESA selects clients with high proximal gap (hard samples)
+            self.selected_client_losses.append(selected_proximal_gaps)
+            # Convert indices to strings for consistency
+            self.selected_client_indices.append([str(idx) for idx in selected_indices.tolist()])
 
             # === MESA 核心逻辑 4: 聚合 ===
             self.evaluate_personalized_model()

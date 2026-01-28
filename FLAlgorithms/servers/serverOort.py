@@ -39,6 +39,10 @@ class Oort(pFedMe):
             selected_indices = np.random.choice(all_indices, self.num_users, p=probs, replace=False)
             self.selected_users = [self.users[i] for i in selected_indices]
 
+            # Record selected client losses before training (for Effectiveness of Selection analysis)
+            # Note: We record loss before training to show selection criteria
+            self.record_selected_client_losses(selected_indices.tolist())
+
             # 3. 训练 & 更新 Utility
             for user_idx in selected_indices:
                 user = self.users[user_idx]

@@ -52,6 +52,11 @@ class PerAvg(Server):
 
             # choose several users to send back upated model to server
             self.selected_users = self.select_users(glob_iter,self.num_users)
+            
+            # Record selected client losses before training (for Effectiveness of Selection analysis)
+            selected_indices = [user.id for user in self.selected_users]
+            self.record_selected_client_losses(selected_indices)
+            
             for user in self.selected_users:
                 user.train(self.local_epochs) #* user.train_samples
                 
