@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MNIST 数据集对比实验脚本
+CIFAR-10 数据集对比实验脚本
 支持多GPU并行运行，每块GPU同时只运行一个任务
 """
 
@@ -12,7 +12,7 @@ from datetime import datetime
 # ============ 配置参数 ============
 NUM_GPUS = 8
 
-DATASET = "Mnist"
+DATASET = "Cifar10"
 BATCH_SIZE = 20
 NUM_GLOBAL_ITERS = 800
 LOCAL_EPOCHS = 20
@@ -25,7 +25,7 @@ LAMDA = 15
 
 # ============ 创建日志目录 ============
 TIMESTAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
-LOG_DIR = f"logs/{TIMESTAMP}-mnist"
+LOG_DIR = f"logs/{TIMESTAMP}-cifar10"
 os.makedirs(LOG_DIR, exist_ok=True)
 print(f"Log directory: {LOG_DIR}")
 
@@ -34,31 +34,24 @@ print(f"Log directory: {LOG_DIR}")
 
 TASKS = []
 TASKS_TODO = [
-    "DNN-MESA",
-    "DNN-HiCS",
-    "DNN-Oort",
-    "DNN-PoC",
-    "DNN-pFedMe",
-    "DNN-FedAvg",
-    "DNN-PerAvg",
-    "MCLR-MESA",
-    "MCLR-HiCS",
-    "MCLR-Oort",
-    "MCLR-PoC",
-    "MCLR-pFedMe",
-    "MCLR-FedAvg",
-    "MCLR-PerAvg",
+    "CNN-MESA",
+    "CNN-HiCS",
+    "CNN-Oort",
+    "CNN-PoC",
+    "CNN-pFedMe",
+    "CNN-FedAvg",
+    "CNN-PerAvg",
 ]
 
-# ============ 非凸场景 (DNN) ============
-MODEL = "dnn"
-LR = 0.005
-PERSONAL_LR = 0.09
+# ============ CNN 模型 (CIFAR-10 使用 CNN) ============
+MODEL = "cnn"
+LR = 0.01
+PERSONAL_LR = 0.01
 BETA = 1
 
 # MESA
-if "DNN-MESA" in TASKS_TODO:
-    TASKS.append(("DNN-MESA", "dnn_MESA.log", f"""
+if "CNN-MESA" in TASKS_TODO:
+    TASKS.append(("CNN-MESA", "cnn_MESA.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
@@ -67,8 +60,8 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
 """))
 
 # HiCS
-if "DNN-HiCS" in TASKS_TODO:
-    TASKS.append(("DNN-HiCS", "dnn_HiCS.log", f"""
+if "CNN-HiCS" in TASKS_TODO:
+    TASKS.append(("CNN-HiCS", "cnn_HiCS.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
@@ -77,8 +70,8 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
 """))
 
 # Oort
-if "DNN-Oort" in TASKS_TODO:
-    TASKS.append(("DNN-Oort", "dnn_Oort.log", f"""
+if "CNN-Oort" in TASKS_TODO:
+    TASKS.append(("CNN-Oort", "cnn_Oort.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
@@ -87,8 +80,8 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
 """))
 
 # PoC
-if "DNN-PoC" in TASKS_TODO:
-    TASKS.append(("DNN-PoC", "dnn_PoC.log", f"""
+if "CNN-PoC" in TASKS_TODO:
+    TASKS.append(("CNN-PoC", "cnn_PoC.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
@@ -96,18 +89,9 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
 """))
 
-# HiCS
-TASKS.append(("DNN-HiCS", "dnn_HiCS.log", f"""
-python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
-    --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm HiCS \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
-"""))
-
 # pFedMe
-if "DNN-pFedMe" in TASKS_TODO:
-    TASKS.append(("DNN-pFedMe", "dnn_pFedMe.log", f"""
+if "CNN-pFedMe" in TASKS_TODO:
+    TASKS.append(("CNN-pFedMe", "cnn_pFedMe.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
@@ -116,8 +100,8 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
 """))
 
 # FedAvg
-if "DNN-FedAvg" in TASKS_TODO:
-    TASKS.append(("DNN-FedAvg", "dnn_FedAvg.log", f"""
+if "CNN-FedAvg" in TASKS_TODO:
+    TASKS.append(("CNN-FedAvg", "cnn_FedAvg.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
     --learning_rate {LR} --beta {BETA} --lamda {LAMDA} \
     --num_global_iters {NUM_GLOBAL_ITERS} --local_epochs {LOCAL_EPOCHS} \
@@ -125,91 +109,8 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
 """))
 
 # PerAvg
-if "DNN-PerAvg" in TASKS_TODO:
-    TASKS.append(("DNN-PerAvg", "dnn_PerAvg.log", f"""
-python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --beta 0.001 --lamda {LAMDA} \
-    --num_global_iters {NUM_GLOBAL_ITERS} --local_epochs {LOCAL_EPOCHS} \
-    --algorithm PerAvg --numusers {NUM_USERS} --times {TIMES} --gpu {{gpu}}
-"""))
-
-# ============ 凸场景 (MCLR) ============
-MODEL = "mclr"
-LR = 0.005
-PERSONAL_LR = 0.1
-BETA = 1
-
-# MESA
-if "MCLR-MESA" in TASKS_TODO:
-    TASKS.append(("MCLR-MESA", "mclr_MESA.log", f"""
-python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
-    --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm MESA \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
-"""))
-
-# HiCS
-if "MCLR-HiCS" in TASKS_TODO:
-    TASKS.append(("MCLR-HiCS", "mclr_HiCS.log", f"""
-python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
-    --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm HiCS \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
-"""))
-
-# Oort
-if "MCLR-Oort" in TASKS_TODO:
-    TASKS.append(("MCLR-Oort", "mclr_Oort.log", f"""
-python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
-    --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm Oort \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
-"""))
-
-# PoC
-if "MCLR-PoC" in TASKS_TODO:
-    TASKS.append(("MCLR-PoC", "mclr_PoC.log", f"""
-python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
-    --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm PoC \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
-"""))
-
-# HiCS
-TASKS.append(("MCLR-HiCS", "mclr_HiCS.log", f"""
-python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
-    --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm HiCS \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
-"""))
-
-# pFedMe
-if "MCLR-pFedMe" in TASKS_TODO:
-    TASKS.append(("MCLR-pFedMe", "mclr_pFedMe.log", f"""
-python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
-    --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm pFedMe \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
-"""))
-
-# FedAvg
-if "MCLR-FedAvg" in TASKS_TODO:
-    TASKS.append(("MCLR-FedAvg", "mclr_FedAvg.log", f"""
-python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --beta {BETA} --lamda {LAMDA} \
-    --num_global_iters {NUM_GLOBAL_ITERS} --local_epochs {LOCAL_EPOCHS} \
-    --algorithm FedAvg --numusers {NUM_USERS} --times {TIMES} --gpu {{gpu}}
-"""))
-
-# PerAvg
-if "MCLR-PerAvg" in TASKS_TODO:
-    TASKS.append(("MCLR-PerAvg", "mclr_PerAvg.log", f"""
+if "CNN-PerAvg" in TASKS_TODO:
+    TASKS.append(("CNN-PerAvg", "cnn_PerAvg.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
     --learning_rate {LR} --beta 0.001 --lamda {LAMDA} \
     --num_global_iters {NUM_GLOBAL_ITERS} --local_epochs {LOCAL_EPOCHS} \
@@ -290,7 +191,7 @@ class GPUScheduler:
 # ============ 主程序 ============
 if __name__ == "__main__":
     print("=" * 50)
-    print("Running MNIST Experiments (Multi-GPU)")
+    print("Running CIFAR-10 Experiments (Multi-GPU)")
     print("=" * 50)
     
     scheduler = GPUScheduler(NUM_GPUS)

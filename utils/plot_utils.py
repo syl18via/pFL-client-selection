@@ -6,9 +6,10 @@ from matplotlib.ticker import StrMethodFormatter
 import os
 plt.rcParams.update({'font.size': 14})
 
-def simple_read_data(alg):
-    print(alg)
-    hf = h5py.File("./results/"+'{}.h5'.format(alg), 'r')
+def simple_read_data(alg, model_name="dnn"):
+    filepath = f"./results/{model_name}/{alg}.h5"
+    print(filepath)
+    hf = h5py.File(filepath, 'r')
     rs_glob_acc = np.array(hf.get('rs_glob_acc')[:])
     rs_train_acc = np.array(hf.get('rs_train_acc')[:])
     rs_train_loss = np.array(hf.get('rs_train_loss')[:])
@@ -33,7 +34,7 @@ def get_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=[
         algs_lbl[i] = algs_lbl[i]
     return glob_acc, train_acc, train_loss
 
-def get_all_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=0, learning_rate=0,beta=0,algorithms="", batch_size=0, dataset="", k= 0 , personal_learning_rate =0 ,times = 5):
+def get_all_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=0, learning_rate=0,beta=0,algorithms="", batch_size=0, dataset="", k= 0 , personal_learning_rate =0 ,times = 5, model_name="dnn"):
     train_acc = np.zeros((times, Numb_Glob_Iters))
     train_loss = np.zeros((times, Numb_Glob_Iters))
     glob_acc = np.zeros((times, Numb_Glob_Iters))
@@ -47,7 +48,7 @@ def get_all_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, la
             algorithms_list[i] = algorithms_list[i] + "_" + string_learning_rate + "_" + str(num_users) + "u" + "_" + str(batch_size) + "b"  "_" +str(loc_ep1) +  "_" +str(i)
 
         train_acc[i, :], train_loss[i, :], glob_acc[i, :] = np.array(
-            simple_read_data(dataset +"_"+ algorithms_list[i]))[:, :Numb_Glob_Iters]
+            simple_read_data(dataset + "_" + algorithms_list[i], model_name))[:, :Numb_Glob_Iters]
     return glob_acc, train_acc, train_loss
 
 
@@ -61,10 +62,10 @@ def get_data_label_style(input_data = [], linestyles= [], algs_lbl = [], lamb = 
 
     return data, lstyles, labels
 
-def average_data(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb="", learning_rate="", beta="", algorithms="", batch_size=0, dataset = "", k = "", personal_learning_rate = "", times = 5):
+def average_data(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb="", learning_rate="", beta="", algorithms="", batch_size=0, dataset = "", k = "", personal_learning_rate = "", times = 5, model_name="dnn"):
     if(algorithms == "PerAvg"):
         algorithms = "PerAvg_p"
-    glob_acc, train_acc, train_loss = get_all_training_data_value( num_users, loc_ep1, Numb_Glob_Iters, lamb, learning_rate, beta, algorithms, batch_size, dataset, k, personal_learning_rate,times)
+    glob_acc, train_acc, train_loss = get_all_training_data_value( num_users, loc_ep1, Numb_Glob_Iters, lamb, learning_rate, beta, algorithms, batch_size, dataset, k, personal_learning_rate,times, model_name)
     glob_acc_data = np.average(glob_acc, axis=0)
     train_acc_data = np.average(train_acc, axis=0)
     train_loss_data = np.average(train_loss, axis=0)
@@ -76,13 +77,17 @@ def average_data(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb="", learning
     print("std:", np.std(max_accurancy))
     print("Mean:", np.mean(max_accurancy))
 
+    # 按模型类型分目录
+    result_dir = f"./results/{model_name}"
+    os.makedirs(result_dir, exist_ok=True)
+    
     alg = dataset + "_" + algorithms
     alg = alg + "_" + str(learning_rate) + "_" + str(beta) + "_" + str(lamb) + "_" + str(num_users) + "u" + "_" + str(batch_size) + "b" + "_" + str(loc_ep1)
     if(algorithms == "pFedMe" or algorithms == "pFedMe_p"):
         alg = alg + "_" + str(k) + "_" + str(personal_learning_rate)
     alg = alg + "_" + "avg"
     if (len(glob_acc) != 0 &  len(train_acc) & len(train_loss)) :
-        with h5py.File("./results/"+'{}.h5'.format(alg,loc_ep1), 'w') as hf:
+        with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
             hf.create_dataset('rs_glob_acc', data=glob_acc_data)
             hf.create_dataset('rs_train_acc', data=train_acc_data)
             hf.create_dataset('rs_train_loss', data=train_loss_data)

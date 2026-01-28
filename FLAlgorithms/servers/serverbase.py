@@ -17,7 +17,13 @@ class Server:
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.total_train_samples = 0
-        self.model = copy.deepcopy(model)
+        # model 是元组 (model_object, model_name)，如 (DNN(), "dnn")
+        if isinstance(model, tuple):
+            self.model = copy.deepcopy(model[0])
+            self.model_name = model[1]
+        else:
+            self.model = copy.deepcopy(model)
+            self.model_name = "unknown"
         self.users = []
         self.selected_users = []
         self.num_users = num_users
@@ -126,13 +132,17 @@ class Server:
             
     # Save loss, accurancy to h5 fiel
     def save_results(self):
+        # 按模型类型分目录: results/{model_name}/
+        result_dir = f"./results/{self.model_name}"
+        os.makedirs(result_dir, exist_ok=True)
+        
         alg = self.dataset + "_" + self.algorithm
         alg = alg + "_" + str(self.learning_rate) + "_" + str(self.beta) + "_" + str(self.lamda) + "_" + str(self.num_users) + "u" + "_" + str(self.batch_size) + "b" + "_" + str(self.local_epochs)
         if(self.algorithm == "pFedMe" or self.algorithm == "pFedMe_p"):
             alg = alg + "_" + str(self.K) + "_" + str(self.personal_learning_rate)
         alg = alg + "_" + str(self.times)
         if (len(self.rs_glob_acc) != 0 &  len(self.rs_train_acc) & len(self.rs_train_loss)) :
-            with h5py.File("./results/"+'{}.h5'.format(alg, self.local_epochs), 'w') as hf:
+            with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc)
                 hf.create_dataset('rs_train_acc', data=self.rs_train_acc)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss)
@@ -145,7 +155,7 @@ class Server:
             alg = alg + "_" + str(self.K) + "_" + str(self.personal_learning_rate)
         alg = alg + "_" + str(self.times)
         if (len(self.rs_glob_acc_per) != 0 &  len(self.rs_train_acc_per) & len(self.rs_train_loss_per)) :
-            with h5py.File("./results/"+'{}.h5'.format(alg, self.local_epochs), 'w') as hf:
+            with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc_per)
                 hf.create_dataset('rs_train_acc', data=self.rs_train_acc_per)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss_per)
