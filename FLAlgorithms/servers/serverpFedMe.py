@@ -1,6 +1,7 @@
 import torch
 import os
 import time
+from loguru import logger
 
 from FLAlgorithms.users.userpFedMe import UserpFedMe
 from FLAlgorithms.servers.serverbase import Server
@@ -25,8 +26,8 @@ class pFedMe(Server):
             user = UserpFedMe(device, id, train, test, model, batch_size, learning_rate, beta, lamda, local_epochs, optimizer, K, personal_learning_rate)
             self.users.append(user)
             self.total_train_samples += user.train_samples
-        print("Number of users / total users:",num_users, " / " ,total_users)
-        print("Finished creating pFedMe server.")
+        logger.info(f"Number of users / total users: {num_users} / {total_users}")
+        logger.info("Finished creating pFedMe server.")
 
     def send_grads(self):
         assert (self.users is not None and len(self.users) > 0)
@@ -44,13 +45,13 @@ class pFedMe(Server):
         for glob_iter in range(self.num_glob_iters):
             round_start_time = time.time()  # Start timing this round
             
-            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (pFedMe)-------------")
+            logger.info(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (pFedMe)-------------")
             # send all parameter for users 
             self.send_parameters()
 
             # Evaluate gloal model on user for each interation
-            print("Evaluate global model")
-            print("")
+            logger.info("Evaluate global model")
+            logger.info("")
             self.evaluate()
 
             # choose several users to send back upated model to server (random selection)

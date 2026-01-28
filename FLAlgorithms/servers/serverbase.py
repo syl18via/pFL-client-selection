@@ -5,6 +5,7 @@ import h5py
 from utils.model_utils import Metrics
 import copy
 import time
+from loguru import logger
 
 class Server:
     def __init__(self, device, dataset,algorithm, model, batch_size, learning_rate ,beta, lamda,
@@ -107,7 +108,7 @@ class Server:
             list of selected clients objects
         '''
         if(num_users == len(self.users)):
-            print("All users are selected")
+            logger.info("All users are selected")
             return self.users
 
         num_users = min(num_users, len(self.users))
@@ -347,10 +348,10 @@ class Server:
         self.rs_glob_acc.append(glob_acc)
         self.rs_train_acc.append(train_acc)
         self.rs_train_loss.append(train_loss)
-        #print("stats_train[1]",stats_train[3][0])
-        print("Average Global Accurancy: ", glob_acc)
-        print("Average Global Trainning Accurancy: ", train_acc)
-        print("Average Global Trainning Loss: ",train_loss)
+        #logger.info("stats_train[1]",stats_train[3][0])
+        logger.info(f"Average Global Accurancy: {glob_acc}")
+        logger.info(f"Average Global Trainning Accurancy: {train_acc}")
+        logger.info(f"Average Global Trainning Loss: {train_loss}")
 
     def evaluate_personalized_model(self):
         stats = self.test_persionalized_model()  
@@ -362,10 +363,10 @@ class Server:
         self.rs_glob_acc_per.append(glob_acc)
         self.rs_train_acc_per.append(train_acc)
         self.rs_train_loss_per.append(train_loss)
-        #print("stats_train[1]",stats_train[3][0])
-        print("Average Personal Accurancy: ", glob_acc)
-        print("Average Personal Trainning Accurancy: ", train_acc)
-        print("Average Personal Trainning Loss: ",train_loss)
+        #logger.info("stats_train[1]",stats_train[3][0])
+        logger.info(f"Average Personal Accurancy: {glob_acc}")
+        logger.info(f"Average Personal Trainning Accurancy: {train_acc}")
+        logger.info(f"Average Personal Trainning Loss: {train_loss}")
 
     def evaluate_one_step(self):
         for c in self.users:
@@ -385,7 +386,7 @@ class Server:
         self.rs_glob_acc_per.append(glob_acc)
         self.rs_train_acc_per.append(train_acc)
         self.rs_train_loss_per.append(train_loss)
-        #print("stats_train[1]",stats_train[3][0])
-        print("Average Personal Accurancy: ", glob_acc)
-        print("Average Personal Trainning Accurancy: ", train_acc)
-        print("Average Personal Trainning Loss: ",train_loss)
+        #logger.info("stats_train[1]",stats_train[3][0])
+        logger.info(f"Average Personal Accurancy: {glob_acc}")
+        logger.info(f"Average Personal Trainning Accurancy: {train_acc}")
+        logger.info(f"Average Personal Trainning Loss: {train_loss}")

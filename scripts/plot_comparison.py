@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import os
+from loguru import logger
 
 plt.rcParams.update({'font.size': 12})
 plt.rcParams['figure.figsize'] = (8, 6)
@@ -16,7 +17,7 @@ plt.rcParams['figure.figsize'] = (8, 6)
 def read_h5_file(filepath):
     """读取h5文件中的数据"""
     if not os.path.exists(filepath):
-        print(f"Warning: File not found: {filepath}")
+        logger.warning(f"File not found: {filepath}")
         return None, None, None
     
     hf = h5py.File(filepath, 'r')
@@ -140,12 +141,12 @@ def plot_comparison(dataset, model, output_dir="./figures", max_rounds=None):
                 "train_loss": train_loss,
                 "config": alg
             }
-            print(f"✓ Loaded {alg['name']}: max_acc={test_acc.max():.4f}, final_acc={test_acc[-1]:.4f}")
+            logger.info(f"✓ Loaded {alg['name']}: max_acc={test_acc.max():.4f}, final_acc={test_acc[-1]:.4f}")
         else:
-            print(f"✗ Failed to load {alg['name']}")
+            logger.warning(f"✗ Failed to load {alg['name']}")
     
     if len(results) == 0:
-        print("No data found! Please run experiments first.")
+        logger.error("No data found! Please run experiments first.")
         return
 
     markevery = num_glob_iters//10 if max_rounds is None else max_rounds//10
@@ -169,7 +170,7 @@ def plot_comparison(dataset, model, output_dir="./figures", max_rounds=None):
     fig1.tight_layout()
     fig1.savefig(f"{output_dir}/{dataset}_{model}_test_acc.pdf", bbox_inches="tight")
     fig1.savefig(f"{output_dir}/{dataset}_{model}_test_acc.png", dpi=150, bbox_inches="tight")
-    print(f"Saved: {output_dir}/{dataset}_{model}_test_acc.pdf")
+    logger.info(f"Saved: {output_dir}/{dataset}_{model}_test_acc.pdf")
     
     # 绘制训练损失
     fig2, ax2 = plt.subplots(figsize=(8, 6))
@@ -190,17 +191,17 @@ def plot_comparison(dataset, model, output_dir="./figures", max_rounds=None):
     fig2.tight_layout()
     fig2.savefig(f"{output_dir}/{dataset}_{model}_train_loss.pdf", bbox_inches="tight")
     fig2.savefig(f"{output_dir}/{dataset}_{model}_train_loss.png", dpi=150, bbox_inches="tight")
-    print(f"Saved: {output_dir}/{dataset}_{model}_train_loss.pdf")
+    logger.info(f"Saved: {output_dir}/{dataset}_{model}_train_loss.pdf")
     
     # 打印最终结果汇总
-    print("\n" + "="*60)
-    print(f"Results Summary: {dataset} - {model.upper()}")
-    print("="*60)
-    print(f"{'Algorithm':<15} {'Max Acc':>10} {'Final Acc':>10} {'Min Loss':>10}")
-    print("-"*60)
+    logger.info("\n" + "="*60)
+    logger.info(f"Results Summary: {dataset} - {model.upper()}")
+    logger.info("="*60)
+    logger.info(f"{'Algorithm':<15} {'Max Acc':>10} {'Final Acc':>10} {'Min Loss':>10}")
+    logger.info("-"*60)
     for name, data in results.items():
         cfg = data["config"]
-        print(f"{cfg['label']:<15} {data['test_acc'].max():>10.4f} {data['test_acc'][-1]:>10.4f} {data['train_loss'].min():>10.4f}")
+        logger.info(f"{cfg['label']:<15} {data['test_acc'].max():>10.4f} {data['test_acc'][-1]:>10.4f} {data['train_loss'].min():>10.4f}")
     
     plt.show()
 

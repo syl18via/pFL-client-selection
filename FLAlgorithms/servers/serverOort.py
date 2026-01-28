@@ -1,5 +1,6 @@
 import numpy as np
 import time
+from loguru import logger
 from FLAlgorithms.servers.serverpFedMe import pFedMe
 
 class Oort(pFedMe):
@@ -18,7 +19,7 @@ class Oort(pFedMe):
         for glob_iter in range(self.num_glob_iters):
             round_start_time = time.time()  # Start timing this round
             
-            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (Oort)-------------")
+            logger.info(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (Oort)-------------")
             self.send_parameters()
             self.evaluate()
 

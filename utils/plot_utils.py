@@ -4,11 +4,12 @@ import numpy as np
 from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes, mark_inset
 from matplotlib.ticker import StrMethodFormatter
 import os
+from loguru import logger
 plt.rcParams.update({'font.size': 14})
 
 def simple_read_data(alg, model_name="dnn"):
     filepath = f"./results/{model_name}/{alg}.h5"
-    print(filepath)
+    logger.info(filepath)
     hf = h5py.File(filepath, 'r')
     rs_glob_acc = np.array(hf.get('rs_glob_acc')[:])
     rs_train_acc = np.array(hf.get('rs_train_acc')[:])
@@ -74,8 +75,8 @@ def average_data(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb="", learning
     for i in range(times):
         max_accurancy.append(glob_acc[i].max())
     
-    print("std:", np.std(max_accurancy))
-    print("Mean:", np.mean(max_accurancy))
+    logger.info(f"std: {np.std(max_accurancy)}")
+    logger.info(f"Mean: {np.mean(max_accurancy)}")
 
     # 按模型类型分目录
     result_dir = f"./results/{model_name}"
@@ -103,7 +104,7 @@ def plot_summary_one_figure(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=[
     train_acc = average_smooth(train_acc_, window='flat')
 
     #glob_acc, train_acc, train_loss = get_training_data_value( num_users, loc_ep1, Numb_Glob_Iters, lamb, learning_rate, beta, algorithms_list, batch_size, dataset, k, personal_learning_rate )
-    print("max value of test accurancy",glob_acc.max())
+    logger.info(f"max value of test accurancy {glob_acc.max()}")
     plt.figure(1,figsize=(5, 5))
     MIN = train_loss.min() - 0.001
     start = 0
@@ -149,8 +150,7 @@ def get_max_value_index(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=[], l
     glob_acc, train_acc, train_loss = get_training_data_value(
         num_users, loc_ep1, Numb_Glob_Iters, lamb, learning_rate, algorithms_list, batch_size, dataset)
     for i in range(Numb_Algs):
-        print("Algorithm: ", algorithms_list[i], "Max testing Accurancy: ", glob_acc[i].max(
-        ), "Index: ", np.argmax(glob_acc[i]), "local update:", loc_ep1[i])
+        logger.info(f"Algorithm: {algorithms_list[i]} Max testing Accurancy: {glob_acc[i].max()} Index: {np.argmax(glob_acc[i])} local update: {loc_ep1[i]}")
 
 def get_label_name(name):
     if name.startswith("pFedMe"):
@@ -193,7 +193,7 @@ def plot_summary_one_figure_synthetic_R(num_users, loc_ep1, Numb_Glob_Iters, lam
     
     
     linestyles = ['-','-','-','-.','-.','-.']
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'c', 'darkorange', 'tab:brown', 'w']
     markers = ["o","v","s","*","x","P"]
     plt.figure(1,figsize=(5, 5))
@@ -234,7 +234,7 @@ def plot_summary_one_figure_synthetic_K(num_users, loc_ep1, Numb_Glob_Iters, lam
     train_acc = average_smooth(train_acc_, window='flat')
     
     linestyles = ['-','-','-','-.','-.','-.']
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green','darkorange', 'r', 'c', 'tab:brown', 'w']
     markers = ["o","v","s","*","x","P"]
     plt.figure(1,figsize=(5, 5))
@@ -274,7 +274,7 @@ def plot_summary_one_figure_synthetic_L(num_users, loc_ep1, Numb_Glob_Iters, lam
     
     linestyles = ['-','-','-','-.','-.','-.']
     markers = ["o","v","s","*","x","P"]
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'c', 'darkorange', 'tab:brown', 'm']
     plt.figure(1,figsize=(5, 5))
     for i in range(Numb_Algs):
@@ -313,7 +313,7 @@ def plot_summary_one_figure_synthetic_D(num_users, loc_ep1, Numb_Glob_Iters, lam
     
     linestyles = ['-','-','-','-.','-.','-.']
     markers = ["o","v","s","*","x","P"]
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'c', 'darkorange', 'tab:brown', 'm']
     plt.figure(1,figsize=(5, 5))
     for i in range(Numb_Algs):
@@ -345,7 +345,7 @@ def plot_summary_one_figure_synthetic_Compare(num_users, loc_ep1, Numb_Glob_Iter
     dataset = dataset
     glob_acc_, train_acc_, train_loss_ = get_training_data_value( num_users, loc_ep1, Numb_Glob_Iters, lamb, learning_rate, beta, algorithms_list, batch_size, dataset, k, personal_learning_rate )
     for i in range(Numb_Algs):
-        print("max accurancy:", train_acc_[i].max())
+        logger.info(f"max accurancy: {train_acc_[i].max()}")
     glob_acc =  average_smooth(glob_acc_, window='flat')
     train_loss = average_smooth(train_loss_, window='flat')
     train_acc = average_smooth(train_acc_, window='flat')
@@ -353,7 +353,7 @@ def plot_summary_one_figure_synthetic_Compare(num_users, loc_ep1, Numb_Glob_Iter
     linestyles = ['-','-','-','-','-','-','-']
     #linestyles = ['-','-','-','-','-','-','-']
     markers = ["o","v","s","*","x","P"]
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'darkorange', 'tab:brown', 'm']
     plt.figure(1,figsize=(5, 5))
     plt.title("$\mu-$"+ "strongly convex")
@@ -393,7 +393,7 @@ def plot_summary_one_figure_mnist_Compare(num_users, loc_ep1, Numb_Glob_Iters, l
     
     glob_acc_, train_acc_, train_loss_ = get_training_data_value( num_users, loc_ep1, Numb_Glob_Iters, lamb, learning_rate, beta, algorithms_list, batch_size, dataset, k, personal_learning_rate )
     for i in range(Numb_Algs):
-        print("max accurancy:", glob_acc_[i].max())
+        logger.info(f"max accurancy: {glob_acc_[i].max()}")
     glob_acc =  average_smooth(glob_acc_, window='flat')
     train_loss = average_smooth(train_loss_, window='flat')
     train_acc = average_smooth(train_acc_, window='flat')
@@ -402,7 +402,7 @@ def plot_summary_one_figure_mnist_Compare(num_users, loc_ep1, Numb_Glob_Iters, l
     linestyles = ['-','-','-','-','-','-','-']
     #linestyles = ['-','-','-','-','-','-','-']
     markers = ["o","v","s","*","x","P"]
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'darkorange', 'tab:brown', 'm']
     plt.figure(1,figsize=(5, 5))
     plt.title("$\mu-$"+ "strongly convex")
@@ -451,7 +451,7 @@ def plot_summary_one_figure_mnist_K(num_users, loc_ep1, Numb_Glob_Iters, lamb, l
     linestyles = ['-','-','-','-.','-.','-.']
     #linestyles = ['-','-','-','-','-','-','-']
     markers = ["o","v","s","*","x","P"]
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'darkorange', 'tab:brown', 'm']
     plt.figure(1,figsize=(5, 5))
     plt.title("$\mu-$"+ "strongly convex")
@@ -498,7 +498,7 @@ def plot_summary_one_figure_mnist_R(num_users, loc_ep1, Numb_Glob_Iters, lamb, l
     linestyles = ['-','-','-','-.','-.','-.']
     #linestyles = ['-','-','-','-','-','-','-']
     markers = ["o","v","s","*","x","P"]
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'darkorange', 'tab:brown', 'm']
     plt.figure(1,figsize=(5, 5))
     plt.grid(True)
@@ -544,7 +544,7 @@ def plot_summary_one_figure_mnist_L(num_users, loc_ep1, Numb_Glob_Iters, lamb, l
     linestyles = ['-','-','-','-.','-.','-.']
     #linestyles = ['-','-','-','-','-','-','-']
     markers = ["o","v","s","*","x","d"]
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'darkorange', 'tab:brown', 'm']
     plt.figure(1,figsize=(5, 5))
     plt.grid(True)
@@ -589,7 +589,7 @@ def plot_summary_one_figure_mnist_D(num_users, loc_ep1, Numb_Glob_Iters, lamb, l
     train_acc = average_smooth(train_acc_, window='flat')
     linestyles = ['-','-','-','-.','-.','-.']
     markers = ["o","v","s","*","x","P"]
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'darkorange', 'tab:brown', 'm']
     plt.figure(1,figsize=(5, 5))
     plt.grid(True)
@@ -636,7 +636,7 @@ def plot_summary_one_figure_mnist_Beta(num_users, loc_ep1, Numb_Glob_Iters, lamb
     
     linestyles = ['-','-','-','-.','-.','-.']
     markers = ["o","v","s","*","x","P"]
-    print(lamb)
+    logger.info(lamb)
     colors = ['tab:blue', 'tab:green', 'r', 'darkorange', 'tab:brown', 'm']
     plt.figure(1,figsize=(5, 5))
     plt.grid(True)

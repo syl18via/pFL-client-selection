@@ -7,6 +7,7 @@ from itertools import product
 from sklearn.cluster import AgglomerativeClustering 
 from numpy.random import choice
 from copy import deepcopy
+from loguru import logger
 
 from FLAlgorithms.servers.serverpFedMe import pFedMe
 from utils.model_utils import read_data, read_user_data
@@ -373,7 +374,7 @@ class HiCS(pFedMe):
         for glob_iter in range(self.num_glob_iters):
             round_start_time = time.time()  # Start timing this round
             
-            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (HiCS)-------------")
+            logger.info(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (HiCS)-------------")
             
             # Store previous global model before sending parameters
             self.before_step(self.model)
@@ -387,7 +388,7 @@ class HiCS(pFedMe):
             # HiCS client selection
             selected_indices = self.select_clients_hics(glob_iter, all_client_indices)
             self.selected_users = [self.users[i] for i in selected_indices]
-            print(f"Selected Clients: {selected_indices}")
+            logger.info(f"Selected Clients: {selected_indices}")
 
             # Record selected client losses before training (for Effectiveness of Selection analysis)
             self.record_selected_client_losses(selected_indices)

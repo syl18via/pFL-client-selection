@@ -1,6 +1,7 @@
 import torch
 import os
 import time
+from loguru import logger
 
 from FLAlgorithms.users.userperavg import UserPerAvg
 from FLAlgorithms.servers.serverbase import Server
@@ -22,8 +23,8 @@ class PerAvg(Server):
             user = UserPerAvg(device, id, train, test, model, batch_size, learning_rate, beta, lamda, local_epochs, optimizer ,total_users , num_users)
             self.users.append(user)
             self.total_train_samples += user.train_samples
-        print("Number of users / total users:",num_users, " / " ,total_users)
-        print("Finished creating Local Per-Avg.")
+        logger.info(f"Number of users / total users: {num_users} / {total_users}")
+        logger.info("Finished creating Local Per-Avg.")
 
     def send_grads(self):
         assert (self.users is not None and len(self.users) > 0)
@@ -41,13 +42,13 @@ class PerAvg(Server):
         for glob_iter in range(self.num_glob_iters):
             round_start_time = time.time()  # Start timing this round
             
-            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (PerAvg)-------------")
+            logger.info(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (PerAvg)-------------")
             # send all parameter for users 
             self.send_parameters()
 
             # Evaluate gloal model on user for each interation
-            print("Evaluate global model with one step update")
-            print("")
+            logger.info("Evaluate global model with one step update")
+            logger.info("")
             self.evaluate_one_step()
 
             # choose several users to send back upated model to server

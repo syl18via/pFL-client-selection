@@ -1,6 +1,7 @@
 import torch
 import os
 import time
+from loguru import logger
 
 from FLAlgorithms.users.useravg import UserAVG
 from FLAlgorithms.servers.serverbase import Server
@@ -24,8 +25,8 @@ class FedAvg(Server):
             self.users.append(user)
             self.total_train_samples += user.train_samples
             
-        print("Number of users / total users:",num_users, " / " ,total_users)
-        print("Finished creating FedAvg server.")
+        logger.info(f"Number of users / total users: {num_users} / {total_users}")
+        logger.info("Finished creating FedAvg server.")
 
     def send_grads(self):
         assert (self.users is not None and len(self.users) > 0)
@@ -43,7 +44,7 @@ class FedAvg(Server):
         for glob_iter in range(self.num_glob_iters):
             round_start_time = time.time()  # Start timing this round
             
-            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (FedAvg)-------------")
+            logger.info(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (FedAvg)-------------")
             #loss_ = 0
             self.send_parameters()
 

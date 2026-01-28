@@ -6,6 +6,7 @@ import argparse
 import importlib
 import random
 import os
+from loguru import logger
 from FLAlgorithms.servers.serverMESA import MESA
 from FLAlgorithms.servers.serverOort import Oort
 from FLAlgorithms.servers.serverPoC import PoC
@@ -18,8 +19,10 @@ from utils.plot_utils import *
 import torch
 torch.manual_seed(0)
 
-def main(dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-         local_epochs, optimizer, numusers, K, personal_learning_rate, times, gpu, save_model):
+def main(
+    dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
+    local_epochs, optimizer, numusers, K, personal_learning_rate, times, gpu, save_model
+):
 
     # Get device status: Check GPU or CPU
     device = torch.device("cuda:{}".format(gpu) if torch.cuda.is_available() and gpu != -1 else "cpu")
@@ -28,13 +31,13 @@ def main(dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_
     model_name = model
 
     for i in range(times):
-        print("---------------Running time:------------",i)
+        logger.info(f"---------------Running time:------------ {i}")
         # Generate model (返回元组: (model_object, model_name))
         if(model_name == "mclr"):
             if(dataset == "Mnist"):
                 model = Mclr_Logistic().to(device), model_name
             else:
-                model = Mclr_Logistic(60,10).to(device), model_name
+                model = Mclr_Logistic(60, 10).to(device), model_name
                 
         if(model_name == "cnn"):
             if(dataset == "Mnist"):
@@ -77,8 +80,36 @@ def main(dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_
     if(algorithm == "PerAvg"):
         algorithm == "PerAvg_p"
     if(algorithm == "pFedMe"):
-        average_data(num_users=numusers, loc_ep1=local_epochs, Numb_Glob_Iters=num_glob_iters, lamb=lamda,learning_rate=learning_rate, beta = beta, algorithms="pFedMe_p", batch_size=batch_size, dataset=dataset, k = K, personal_learning_rate = personal_learning_rate,times = times, model_name=model_name)
-    average_data(num_users=numusers, loc_ep1=local_epochs, Numb_Glob_Iters=num_glob_iters, lamb=lamda,learning_rate=learning_rate, beta = beta, algorithms=algorithm, batch_size=batch_size, dataset=dataset, k = K, personal_learning_rate = personal_learning_rate,times = times, model_name=model_name)
+        average_data(
+            num_users=numusers,
+            loc_ep1=local_epochs,
+            Numb_Glob_Iters=num_glob_iters,
+            lamb=lamda,
+            learning_rate=learning_rate,
+            beta=beta,
+            algorithms="pFedMe_p",
+            batch_size=batch_size,
+            dataset=dataset,
+            k=K,
+            personal_learning_rate=personal_learning_rate,
+            times=times,
+            model_name=model_name
+        )
+    average_data(
+        num_users=numusers,
+        loc_ep1=local_epochs,
+        Numb_Glob_Iters=num_glob_iters,
+        lamb=lamda,
+        learning_rate=learning_rate,
+        beta=beta,
+        algorithms=algorithm,
+        batch_size=batch_size,
+        dataset=dataset,
+        k=K,
+        personal_learning_rate=personal_learning_rate,
+        times=times,
+        model_name=model_name
+    )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -100,34 +131,34 @@ if __name__ == "__main__":
     parser.add_argument("--save_model", action="store_true", help="Save model after training (default: False)")
     args = parser.parse_args()
 
-    print("=" * 80)
-    print("Summary of training process:")
-    print("Algorithm: {}".format(args.algorithm))
-    print("Batch size: {}".format(args.batch_size))
-    print("Learing rate       : {}".format(args.learning_rate))
-    print("Average Moving       : {}".format(args.beta))
-    print("Subset of users      : {}".format(args.numusers))
-    print("Number of global rounds       : {}".format(args.num_global_iters))
-    print("Number of local rounds       : {}".format(args.local_epochs))
-    print("Dataset       : {}".format(args.dataset))
-    print("Local Model       : {}".format(args.model))
-    print("=" * 80)
+    logger.info("=" * 80)
+    logger.info("Summary of training process:")
+    logger.info(f"Algorithm: {args.algorithm}")
+    logger.info(f"Batch size: {args.batch_size}")
+    logger.info(f"Learing rate       : {args.learning_rate}")
+    logger.info(f"Average Moving       : {args.beta}")
+    logger.info(f"Subset of users      : {args.numusers}")
+    logger.info(f"Number of global rounds       : {args.num_global_iters}")
+    logger.info(f"Number of local rounds       : {args.local_epochs}")
+    logger.info(f"Dataset       : {args.dataset}")
+    logger.info(f"Local Model       : {args.model}")
+    logger.info("=" * 80)
 
     main(
         dataset=args.dataset,
-        algorithm = args.algorithm,
+        algorithm=args.algorithm,
         model=args.model,
         batch_size=args.batch_size,
         learning_rate=args.learning_rate,
-        beta = args.beta, 
-        lamda = args.lamda,
+        beta=args.beta, 
+        lamda=args.lamda,
         num_glob_iters=args.num_global_iters,
         local_epochs=args.local_epochs,
         optimizer= args.optimizer,
-        numusers = args.numusers,
+        numusers=args.numusers,
         K=args.K,
         personal_learning_rate=args.personal_learning_rate,
-        times = args.times,
+        times=args.times,
         gpu=args.gpu,
         save_model=args.save_model
-        )
+    )

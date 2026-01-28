@@ -1,5 +1,6 @@
 import numpy as np
 import time
+from loguru import logger
 from FLAlgorithms.servers.serverpFedMe import pFedMe
 from FLAlgorithms.users.userMESA import UserMESA
 from utils.model_utils import read_data, read_user_data
@@ -33,7 +34,7 @@ class MESA(pFedMe):
         for glob_iter in range(self.num_glob_iters):
             round_start_time = time.time()  # Start timing this round
             
-            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (MESA)-------------")
+            logger.info(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (MESA)-------------")
             self.send_parameters()
             self.evaluate() # 记录全局精度
 
@@ -51,7 +52,7 @@ class MESA(pFedMe):
             # 这里的 num_users 对应 main.py 里的 args.numusers (每轮选多少人)
             selected_indices = np.random.choice(all_indices, self.num_users, p=probs, replace=False)
             self.selected_users = [self.users[i] for i in selected_indices]
-            print(f"Selected Clients: {selected_indices}")
+            logger.info(f"Selected Clients: {selected_indices}")
 
             # === MESA 核心逻辑 3: 只训练被选中的人 & 更新 Scoreboard ===
             # Record proximal gaps (MESA-specific metric) for selected clients
