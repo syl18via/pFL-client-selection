@@ -42,7 +42,30 @@ def read_h5_file_with_selection(filepath):
     if 'selected_client_losses' in hf.keys():
         selected_client_losses = np.array(hf.get('selected_client_losses')[:])
     if 'selected_client_indices' in hf.keys():
-        selected_client_indices = np.array(hf.get('selected_client_indices')[:])
+        indices_data = np.array(hf.get('selected_client_indices')[:])
+        # 如果保存的是字节字符串，需要解码
+        if indices_data.dtype.kind == 'S':  # byte string
+            # 处理多维数组：每轮的被选中 client 索引
+            decoded_indices = []
+            for row in indices_data:
+                decoded_row = []
+                for idx in row:
+                    if isinstance(idx, bytes):
+                        decoded_idx = idx.decode('utf-8').strip('\x00')
+                    else:
+                        decoded_idx = str(idx).strip('\x00')
+                    # 过滤空字符串（填充值）
+                    if decoded_idx and decoded_idx != '':
+                        decoded_row.append(decoded_idx)
+                decoded_indices.append(decoded_row)
+            selected_client_indices = np.array(decoded_indices, dtype=object)
+        else:
+            # 非字节字符串，直接转换
+            decoded_indices = []
+            for row in indices_data:
+                decoded_row = [str(idx) for idx in row if idx != -1 and not (isinstance(idx, str) and idx == '')]
+                decoded_indices.append(decoded_row)
+            selected_client_indices = np.array(decoded_indices, dtype=object)
     
     rs_glob_acc = None
     if 'rs_glob_acc' in hf.keys():
@@ -173,9 +196,15 @@ def plot_loss_distribution(result_dir, output_dir="./figures"):
     
     # 子图1: Loss 分布直方图对比
     ax1 = axes[0]
-    bins = np.linspace(min(min(losses) for losses in all_losses.values()), 
-                      max(max(losses) for losses in all_losses.values()), 
-                      30)
+    # 确保有数据才绘制
+    if len(all_losses) > 0:
+        all_loss_values = [loss for losses in all_losses.values() for loss in losses]
+        if len(all_loss_values) > 0:
+            bins = np.linspace(min(all_loss_values), max(all_loss_values), 30)
+        else:
+            bins = 30
+    else:
+        bins = 30
     
     for alg_name, losses in all_losses.items():
         ax1.hist(losses, bins=bins, alpha=0.5, label=all_labels[alg_name], 

@@ -1,4 +1,4 @@
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 from tqdm import trange
 import numpy as np
 import random
@@ -20,14 +20,36 @@ if not os.path.exists(dir_path):
     os.makedirs(dir_path)
 
 # Get MNIST data, normalize, and divide by level
-mnist = fetch_mldata('MNIST original', data_home='./data')
+# fetch_mldata is deprecated, use fetch_openml instead
+try:
+    # Try to load from local file first
+    import scipy.io
+    mnist_file = './data/mldata/mnist-original.mat'
+    if os.path.exists(mnist_file):
+        print("Loading MNIST from local file...")
+        mnist_raw = scipy.io.loadmat(mnist_file)
+        mnist_data_array = mnist_raw['data'].T
+        mnist_target_array = mnist_raw['label'][0]
+        mnist = type('obj', (object,), {'data': mnist_data_array, 'target': mnist_target_array})()
+    else:
+        # Fallback to fetch_openml
+        print("Downloading MNIST from openml...")
+        mnist = fetch_openml('mnist_784', version=1, as_frame=False, parser='auto')
+        mnist.target = mnist.target.astype(np.int64)
+except Exception as e:
+    print(f"Error loading MNIST: {e}")
+    print("Trying fetch_openml...")
+    mnist = fetch_openml('mnist_784', version=1, as_frame=False, parser='auto')
+    mnist.target = mnist.target.astype(np.int64)
 mu = np.mean(mnist.data.astype(np.float32), 0)
 sigma = np.std(mnist.data.astype(np.float32), 0)
 mnist.data = (mnist.data.astype(np.float32) - mu)/(sigma+0.001)
 mnist_data = []
+idx = {}  # Initialize idx dictionary
 for i in trange(10):
-    idx = mnist.target==i
-    mnist_data.append(mnist.data[idx])
+    idx[i] = 0  # Initialize index for each label
+    label_idx = mnist.target==i
+    mnist_data.append(mnist.data[label_idx])
 
 print("\nNumb samples of each label:\n", [len(v) for v in mnist_data])
 users_lables = []
@@ -82,11 +104,19 @@ for user in trange(NUM_USERS):
         print("value of count",count)
         num_samples =  number_samples[count] # num sample
         count = count + 1
-        if idx[l] + num_samples < len(mnist_data[l]):
-            X[user] += mnist_data[l][idx[l]:num_samples].tolist()
+        if idx[l] + num_samples <= len(mnist_data[l]):
+            X[user] += mnist_data[l][idx[l]:idx[l]+num_samples].tolist()
             y[user] += (l*np.ones(num_samples)).tolist()
             idx[l] += num_samples
             print("check len os user:", user, j,"len data", len(X[user]), num_samples)
+        else:
+            # Take remaining samples
+            remaining = len(mnist_data[l]) - idx[l]
+            if remaining > 0:
+                X[user] += mnist_data[l][idx[l]:].tolist()
+                y[user] += (l*np.ones(remaining)).tolist()
+                idx[l] = len(mnist_data[l])
+                print("check len os user:", user, j,"len data", len(X[user]), remaining, "(remaining)")
 
 print("IDX2:", idx) # counting samples for each labels
 
@@ -99,9 +129,16 @@ test_data = {'users': [], 'user_data':{}, 'num_samples':[]}
 for i in range(NUM_USERS):
     uname = 'f_{0:05d}'.format(i)
     
+    # Check if user has data
+    if len(X[i]) == 0:
+        print(f"Warning: User {i} has no data, skipping...")
+        continue
+    
     combined = list(zip(X[i], y[i]))
     random.shuffle(combined)
-    X[i][:], y[i][:] = zip(*combined)
+    X[i], y[i] = zip(*combined)
+    X[i] = list(X[i])
+    y[i] = list(y[i])
     num_samples = len(X[i])
     train_len = int(0.75*num_samples)
     test_len = num_samples - train_len
