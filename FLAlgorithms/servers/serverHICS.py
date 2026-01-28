@@ -363,7 +363,7 @@ class HiCS(pFedMe):
                 
         self.magnitudes = self._magnitude_gradient(self.gradients)
 
-    def train(self):
+    def train(self, save_model=False, current_time=0, total_times=1):
         """HiCS training loop"""
         # Initialize gradients before training starts
         n_samples_dict = {i: user.train_samples for i, user in enumerate(self.users)}

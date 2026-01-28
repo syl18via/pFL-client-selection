@@ -19,7 +19,7 @@ import torch
 torch.manual_seed(0)
 
 def main(dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-         local_epochs, optimizer, numusers, K, personal_learning_rate, times, gpu):
+         local_epochs, optimizer, numusers, K, personal_learning_rate, times, gpu, save_model):
 
     # Get device status: Check GPU or CPU
     device = torch.device("cuda:{}".format(gpu) if torch.cuda.is_available() and gpu != -1 else "cpu")
@@ -67,7 +67,7 @@ def main(dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_
         if(algorithm == "HiCS"):
             server = HiCS(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i)
         
-        server.train()
+        server.train(save_model=save_model, current_time=i, total_times=times)
         server.test()
 
     # Average data 
@@ -88,12 +88,13 @@ if __name__ == "__main__":
     parser.add_argument("--num_global_iters", type=int, default=800)
     parser.add_argument("--local_epochs", type=int, default=20)
     parser.add_argument("--optimizer", type=str, default="SGD")
-    parser.add_argument("--algorithm", type=str, default="pFedMe",choices=["pFedMe", "PerAvg", "FedAvg", "PoC", "MESA", "Oort", "HiCS"]) 
+    parser.add_argument("--algorithm", type=str, default="pFedMe",choices=["pFedMe", "PerAvg", "FedAvg", "Oort", "PoC", "MESA", "HiCS"])
     parser.add_argument("--numusers", type=int, default=20, help="Number of Users per round")
     parser.add_argument("--K", type=int, default=5, help="Computation steps")
     parser.add_argument("--personal_learning_rate", type=float, default=0.09, help="Persionalized learning rate to caculate theta aproximately using K steps")
     parser.add_argument("--times", type=int, default=5, help="running time")
     parser.add_argument("--gpu", type=int, default=0, help="Which GPU to run the experiments, -1 mean CPU, 0,1,2 for GPU")
+    parser.add_argument("--save_model", action="store_true", help="Save model after training (default: False)")
     args = parser.parse_args()
 
     print("=" * 80)
@@ -124,5 +125,6 @@ if __name__ == "__main__":
         K=args.K,
         personal_learning_rate=args.personal_learning_rate,
         times = args.times,
-        gpu=args.gpu
+        gpu=args.gpu,
+        save_model=args.save_model
         )

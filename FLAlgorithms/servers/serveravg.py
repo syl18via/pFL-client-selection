@@ -37,10 +37,10 @@ class FedAvg(Server):
         for user in self.users:
             user.set_grads(grads)
 
-    def train(self):
+    def train(self, save_model=False, current_time=0, total_times=1):
         loss = []
         for glob_iter in range(self.num_glob_iters):
-            print("-------------Round number: ",glob_iter, " -------------")
+            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (FedAvg)-------------")
             #loss_ = 0
             self.send_parameters()
 
@@ -56,4 +56,5 @@ class FedAvg(Server):
             #print(loss_)
         #print(loss)
         self.save_results()
-        self.save_model()
+        if save_model:
+            self.save_model()

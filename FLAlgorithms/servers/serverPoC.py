@@ -12,9 +12,9 @@ class PoC(pFedMe):
         # 防止 d 超过总用户数
         self.d = min(self.d, len(self.users))
 
-    def train(self):
+    def train(self, save_model=False, current_time=0, total_times=1):
         for glob_iter in range(self.num_glob_iters):
-            print("-------------PoC Round number: ", glob_iter, " -------------")
+            print(f"-------------[{current_time+1}/{total_times}] Round: {glob_iter+1}/{self.num_glob_iters} (PoC)-------------")
             self.send_parameters()
             self.evaluate()
 
@@ -31,6 +31,9 @@ class PoC(pFedMe):
                 # 我们利用 User 类现有的 train_error_and_loss 方法
                 # 注意：这里会产生额外的计算开销，你在论文 Overhead Analysis 里要提到这点！
                 _, loss, _ = self.users[idx].train_error_and_loss()
+                # 将 tensor 转换为 Python float
+                if hasattr(loss, 'item'):
+                    loss = loss.item()
                 candidate_losses.append(loss)
             
             # 3. 选 Top-m (Loss 最大的 m 个)
@@ -47,4 +50,5 @@ class PoC(pFedMe):
             self.persionalized_aggregate_parameters()
 
         self.save_results()
-        self.save_model()
+        if save_model:
+            self.save_model()

@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Project specific - 忽略生成的数据，保留脚本
+data/*/data/train/
+data/*/data/test/
+data/*/data/openml/
+models/
+logs/
