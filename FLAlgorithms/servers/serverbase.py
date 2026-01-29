@@ -160,8 +160,11 @@ class Server:
         alg = self.dataset + "_" + self.algorithm
         alg = alg + "_" + str(self.learning_rate) + "_" + str(self.beta) + "_" + str(self.lamda) + "_" + str(self.num_users) + "u" + "_" + str(self.batch_size) + "b" + "_" + str(self.local_epochs)
         # MESA, HiCS, Oort, PoC 也继承自 pFedMe，需要 K 和 personal_learning_rate 参数
-        if(self.algorithm in ["pFedMe", "MESA", "HiCS", "Oort", "PoC"] or self.algorithm == "pFedMe_p"):
-            if hasattr(self, 'K') and hasattr(self, 'personal_learning_rate'):
+        # 但 FedAvg 版本（算法名包含 "_FedAvg"）不需要这些参数
+        base_algorithm = self.algorithm.replace("_FedAvg", "")  # 移除 _FedAvg 后缀以检查基础算法
+        if(base_algorithm in ["pFedMe", "MESA", "HiCS", "Oort", "PoC"] or self.algorithm == "pFedMe_p"):
+            # 只有 pFedMe 版本才需要 K 和 personal_learning_rate
+            if "_FedAvg" not in self.algorithm and hasattr(self, 'K') and hasattr(self, 'personal_learning_rate'):
                 alg = alg + "_" + str(self.K) + "_" + str(self.personal_learning_rate)
         alg = alg + "_" + str(self.current_time)
         if (len(self.rs_glob_acc) != 0 &  len(self.rs_train_acc) & len(self.rs_train_loss)) :
