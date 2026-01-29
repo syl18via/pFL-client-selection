@@ -163,7 +163,7 @@ class Server:
         if(self.algorithm in ["pFedMe", "MESA", "HiCS", "Oort", "PoC"] or self.algorithm == "pFedMe_p"):
             if hasattr(self, 'K') and hasattr(self, 'personal_learning_rate'):
                 alg = alg + "_" + str(self.K) + "_" + str(self.personal_learning_rate)
-        alg = alg + "_" + str(self.times)
+        alg = alg + "_" + str(self.current_time)
         if (len(self.rs_glob_acc) != 0 &  len(self.rs_train_acc) & len(self.rs_train_loss)) :
             with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc)
