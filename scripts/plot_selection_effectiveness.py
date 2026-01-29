@@ -12,11 +12,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import os
+import seaborn as sns
+import pandas as pd
 from loguru import logger
 from utils.path_utils import parse_result_dir, parse_result_filename
 
 plt.rcParams.update({'font.size': 12})
 plt.rcParams['figure.figsize'] = (10, 6)
+sns.set_style("whitegrid")
 
 # 算法显示配置
 ALGORITHM_STYLES = {
@@ -24,7 +27,7 @@ ALGORITHM_STYLES = {
     "HiCS": {"label": "HiCS", "color": "tab:cyan", "marker": "^"},
     "Oort": {"label": "Oort", "color": "tab:blue", "marker": "v"},
     "PoC": {"label": "PoC", "color": "tab:green", "marker": "s"},
-    "pFedMe": {"label": "pFedMe", "color": "tab:orange", "marker": "*"},
+    "pFedMe": {"label": "Random (pFedMe)", "color": "tab:orange", "marker": "*"},
     "FedAvg": {"label": "FedAvg", "color": "tab:purple", "marker": "x"},
     "PerAvg": {"label": "Per-FedAvg", "color": "tab:brown", "marker": "d"},
 }
@@ -381,16 +384,197 @@ def print_statistics_summary(result_dir):
     
     logger.info("="*80)
 
+def plot_round_specific_comparison(result_dir, target_rounds=[10, 50], 
+                                    algorithms=["MESA", "pFedMe"], 
+                                    output_dir="./figures", 
+                                    include_all_clients=False):
+    """绘制特定轮次的 Loss 分布对比图（小提琴图/箱线图）
+    
+    Args:
+        result_dir: 结果目录路径
+        target_rounds: 要对比的轮次列表（0-indexed，例如 [9, 49] 表示第10轮和第50轮）
+        algorithms: 要对比的算法列表，默认 ["MESA", "pFedMe"]
+        output_dir: 输出目录
+        include_all_clients: 是否包含所有client的loss作为背景分布
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    
+    dir_name = os.path.basename(result_dir.rstrip('/'))
+    dir_info = parse_result_dir(dir_name)
+    
+    if dir_info is None:
+        logger.error(f"Cannot parse directory name: {dir_name}")
+        return
+    
+    model = dir_info.get('model_name', 'unknown')
+    dataset = dir_info.get('dataset', 'unknown')
+    
+    all_files = scan_result_files(result_dir, prefer_single_run=True)
+    
+    # 收集指定算法的数据
+    algorithm_data = {}
+    for alg_name in algorithms:
+        # 优先使用个性化模型（pFedMe除外，因为它本身就是个性化）
+        key_p = f"{alg_name}_p"
+        key = alg_name
+        
+        file_info = None
+        if key_p in all_files:
+            file_info = all_files[key_p]
+        elif key in all_files:
+            file_info = all_files[key]
+        
+        if file_info:
+            filepath = file_info["filepath"]
+            selected_losses, selected_indices, rs_glob_acc, wall_clock_times = read_h5_file_with_selection(filepath)
+            
+            if selected_losses is not None:
+                algorithm_data[alg_name] = {
+                    "losses": selected_losses,
+                    "indices": selected_indices,
+                    "style": ALGORITHM_STYLES.get(alg_name, {"label": alg_name, "color": "gray"})
+                }
+                logger.info(f"✓ Loaded {alg_name}: {len(selected_losses)} rounds")
+            else:
+                logger.warning(f"✗ No selection data for {alg_name}")
+        else:
+            logger.warning(f"✗ File not found for {alg_name}")
+    
+    if len(algorithm_data) == 0:
+        logger.error("No valid algorithm data found!")
+        return
+    
+    # 获取所有client的loss（如果需要）
+    all_clients_losses = None
+    if include_all_clients:
+        # 需要从某个算法的文件中读取所有client的loss
+        # 这里假设我们可以从第一个算法的数据中获取
+        # 实际上，我们需要在训练时记录所有client的loss
+        logger.warning("include_all_clients=True is not yet implemented. Skipping background distribution.")
+    
+    # 为每个目标轮次创建图表
+    for target_round in target_rounds:
+        # 检查轮次是否有效
+        max_rounds = min(len(data["losses"]) for data in algorithm_data.values())
+        if target_round >= max_rounds:
+            logger.warning(f"Round {target_round} is out of range (max: {max_rounds-1}). Skipping.")
+            continue
+        
+        # 收集该轮次的数据
+        round_data = []
+        for alg_name, data in algorithm_data.items():
+            round_losses = data["losses"][target_round]
+            valid_losses = round_losses[~np.isnan(round_losses)]
+            
+            if len(valid_losses) > 0:
+                for loss in valid_losses:
+                    round_data.append({
+                        'Loss': float(loss),
+                        'Method': data["style"]["label"]
+                    })
+        
+        if len(round_data) == 0:
+            logger.warning(f"No valid data for round {target_round}. Skipping.")
+            continue
+        
+        # 创建DataFrame
+        df = pd.DataFrame(round_data)
+        
+        # 创建图表
+        fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+        
+        # 子图1: 小提琴图（推荐）
+        ax1 = axes[0]
+        methods = df['Method'].unique()
+        # 创建方法到颜色的映射
+        method_to_color = {}
+        for alg_name, data in algorithm_data.items():
+            method_to_color[data["style"]["label"]] = data["style"]["color"]
+        colors = [method_to_color.get(method, "gray") for method in methods]
+        
+        # 使用seaborn绘制小提琴图
+        sns.violinplot(x='Method', y='Loss', data=df, inner="quartile", 
+                      palette=colors, ax=ax1)
+        
+        # 添加抖动点展示具体样本
+        sns.stripplot(x='Method', y='Loss', data=df, color='black', 
+                     size=3, alpha=0.3, ax=ax1, jitter=True)
+        
+        ax1.set_title(f'Loss Distribution of Selected Clients (Round {target_round+1})', fontsize=14)
+        ax1.set_ylabel('Local Training Loss', fontsize=12)
+        ax1.set_xlabel('')
+        ax1.grid(True, axis='y', linestyle='--', alpha=0.7)
+        
+        # 子图2: 箱线图（传统方法）
+        ax2 = axes[1]
+        box_data = [df[df['Method'] == method]['Loss'].values for method in methods]
+        bp = ax2.boxplot(box_data, labels=methods, patch_artist=True, 
+                        showmeans=True, meanline=True)
+        
+        for patch, color in zip(bp['boxes'], colors):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.7)
+        
+        ax2.set_title(f'Box Plot of Selected Client Losses (Round {target_round+1})', fontsize=14)
+        ax2.set_ylabel('Local Training Loss', fontsize=12)
+        ax2.set_xlabel('')
+        ax2.tick_params(axis='x', rotation=45)
+        ax2.grid(True, alpha=0.3, axis='y')
+        
+        # 添加统计信息文本
+        stats_text = []
+        for method in methods:
+            method_losses = df[df['Method'] == method]['Loss'].values
+            mean_loss = np.mean(method_losses)
+            median_loss = np.median(method_losses)
+            stats_text.append(f"{method}: Mean={mean_loss:.4f}, Median={median_loss:.4f}")
+        
+        stats_str = "\n".join(stats_text)
+        fig.text(0.5, 0.02, stats_str, ha='center', fontsize=10, 
+                bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+        
+        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.15)
+        
+        output_path = f"{output_dir}/{dataset}_{model}_round_{target_round+1}_loss_comparison.png"
+        plt.savefig(output_path, dpi=300, bbox_inches='tight')
+        plt.savefig(output_path.replace('.png', '.pdf'), bbox_inches='tight')
+        logger.info(f"Saved: {output_path}")
+        plt.close()
+        
+        # 打印统计信息
+        logger.info(f"\nRound {target_round+1} Statistics:")
+        logger.info("-" * 60)
+        for method in methods:
+            method_losses = df[df['Method'] == method]['Loss'].values
+            logger.info(f"{method}:")
+            logger.info(f"  Mean: {np.mean(method_losses):.4f}")
+            logger.info(f"  Median: {np.median(method_losses):.4f}")
+            logger.info(f"  Std: {np.std(method_losses):.4f}")
+            logger.info(f"  Min: {np.min(method_losses):.4f}")
+            logger.info(f"  Max: {np.max(method_losses):.4f}")
+            logger.info(f"  Count: {len(method_losses)}")
+        logger.info("-" * 60)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Plot selected client loss distribution')
     parser.add_argument("--result_dir", type=str, required=True,
                         help="Path to result directory")
     parser.add_argument("--output", type=str, default="./figures", help="Output directory")
     parser.add_argument("--plot_type", type=str, default="all", 
-                       choices=["all", "distribution", "over_rounds", "stats"],
+                       choices=["all", "distribution", "over_rounds", "stats", "round_specific"],
                        help="Type of plot to generate")
+    parser.add_argument("--target_rounds", type=int, nargs='+', default=[10, 50],
+                       help="Target rounds for round-specific comparison (1-indexed, e.g., 10 50)")
+    parser.add_argument("--algorithms", type=str, nargs='+', default=["MESA", "pFedMe"],
+                       help="Algorithms to compare (default: MESA pFedMe)")
+    parser.add_argument("--include_all_clients", action="store_true",
+                       help="Include all clients' loss as background distribution (not yet implemented)")
     
     args = parser.parse_args()
+    
+    # Convert 1-indexed rounds to 0-indexed
+    target_rounds = [r - 1 for r in args.target_rounds]
     
     if args.plot_type in ["all", "distribution"]:
         plot_loss_distribution(args.result_dir, args.output)
@@ -400,3 +584,12 @@ if __name__ == "__main__":
     
     if args.plot_type in ["all", "stats"]:
         print_statistics_summary(args.result_dir)
+    
+    if args.plot_type in ["all", "round_specific"]:
+        plot_round_specific_comparison(
+            args.result_dir, 
+            target_rounds=target_rounds,
+            algorithms=args.algorithms,
+            output_dir=args.output,
+            include_all_clients=args.include_all_clients
+        )
