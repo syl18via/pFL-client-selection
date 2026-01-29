@@ -55,8 +55,11 @@ def get_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb=[
     
     for i in range(Numb_Algs):
         alg = algorithms_list[i]
-        K = k[i] if alg in PFEDME_BASED_ALGORITHMS else None
-        plr = personal_learning_rate[i] if alg in PFEDME_BASED_ALGORITHMS else None
+        # 检查是否为 FedAvg 版本（不需要 K 和 personal_learning_rate）
+        is_fedavg_version = "_FedAvg" in alg
+        base_alg = alg.replace("_FedAvg", "")
+        K = k[i] if (base_alg in PFEDME_BASED_ALGORITHMS and not is_fedavg_version) else None
+        plr = personal_learning_rate[i] if (base_alg in PFEDME_BASED_ALGORITHMS and not is_fedavg_version) else None
         
         result = simple_read_data(
             model_name=model_name, dataset=dataset, num_users=num_users,
@@ -84,8 +87,11 @@ def get_all_training_data_value(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, la
     wall_clock_times = np.zeros((times, Numb_Glob_Iters)) if include_time else None
     round_times = np.zeros((times, Numb_Glob_Iters)) if include_time else None
     
-    K = k if algorithms in PFEDME_BASED_ALGORITHMS else None
-    plr = personal_learning_rate if algorithms in PFEDME_BASED_ALGORITHMS else None
+    # 检查是否为 FedAvg 版本（不需要 K 和 personal_learning_rate）
+    is_fedavg_version = "_FedAvg" in algorithms
+    base_algorithm = algorithms.replace("_FedAvg", "")
+    K = k if (base_algorithm in PFEDME_BASED_ALGORITHMS and not is_fedavg_version) else None
+    plr = personal_learning_rate if (base_algorithm in PFEDME_BASED_ALGORITHMS and not is_fedavg_version) else None
     
     for i in range(times):
         result = simple_read_data(
@@ -152,8 +158,11 @@ def average_data(num_users=100, loc_ep1=5, Numb_Glob_Iters=10, lamb="", learning
     logger.info(f"Mean: {np.mean(max_accurancy)}")
 
     # 使用统一路径工具构建目录和文件名
-    K = k if algorithms in PFEDME_BASED_ALGORITHMS else None
-    plr = personal_learning_rate if algorithms in PFEDME_BASED_ALGORITHMS else None
+    # 检查是否为 FedAvg 版本（不需要 K 和 personal_learning_rate）
+    is_fedavg_version = "_FedAvg" in algorithms
+    base_algorithm = algorithms.replace("_FedAvg", "")
+    K = k if (base_algorithm in PFEDME_BASED_ALGORITHMS and not is_fedavg_version) else None
+    plr = personal_learning_rate if (base_algorithm in PFEDME_BASED_ALGORITHMS and not is_fedavg_version) else None
     
     result_dir = build_result_dir(
         model_name=model_name, dataset=dataset, num_users=num_users,

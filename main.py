@@ -8,12 +8,16 @@ import random
 import os
 from loguru import logger
 from FLAlgorithms.servers.serverMESA import MESA
-from FLAlgorithms.servers.serverOort import Oort
-from FLAlgorithms.servers.serverPoC import PoC
-from FLAlgorithms.servers.serverHICS import HiCS
+from FLAlgorithms.servers.serverOortpFedMe import Oort
+from FLAlgorithms.servers.serverPoCpFedMe import PoC
+from FLAlgorithms.servers.serverHICSpFedMe import HiCS
 from FLAlgorithms.servers.serveravg import FedAvg
 from FLAlgorithms.servers.serverpFedMe import pFedMe
 from FLAlgorithms.servers.serverperavg import PerAvg
+# FedAvg-based versions (without pFedMe optimization)
+from FLAlgorithms.servers.serverOortFedAvg import OortFedAvg
+from FLAlgorithms.servers.serverPoCFedAvg import PoCFedAvg
+from FLAlgorithms.servers.serverHICSFedAvg import HiCSFedAvg
 from FLAlgorithms.trainmodel.models import *
 from utils.plot_utils import *
 import torch
@@ -21,7 +25,7 @@ torch.manual_seed(0)
 
 def main(
     dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters,
-    local_epochs, optimizer, numusers, K, personal_learning_rate, times, gpu, save_model
+    local_epochs, optimizer, numusers, K, personal_learning_rate, times, gpu, save_model, framework="pfedme"
 ):
 
     # Get device status: Check GPU or CPU
@@ -62,23 +66,39 @@ def main(
             server = PerAvg(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, i, times)
 
         if(algorithm == "Oort"):
-            server = Oort(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i, times)
+            if framework == "fedavg":
+                # Use FedAvg framework (no pFedMe optimization)
+                server = OortFedAvg(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, i, times)
+            else:
+                # Use pFedMe framework (default, personalized training)
+                server = Oort(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i, times)
         
         if(algorithm == "PoC"):
-            server = PoC(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i, times)
+            if framework == "fedavg":
+                # Use FedAvg framework (no pFedMe optimization)
+                server = PoCFedAvg(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, i, times)
+            else:
+                # Use pFedMe framework (default, personalized training)
+                server = PoC(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i, times)
         
         if(algorithm == "MESA"):
+            # MESA always uses pFedMe framework
             server = MESA(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i, times)
         
         if(algorithm == "HiCS"):
-            server = HiCS(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i, times)
+            if framework == "fedavg":
+                # Use FedAvg framework (no pFedMe optimization)
+                server = HiCSFedAvg(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, i, times)
+            else:
+                # Use pFedMe framework (default, personalized training)
+                server = HiCS(device, dataset, algorithm, model, batch_size, learning_rate, beta, lamda, num_glob_iters, local_epochs, optimizer, numusers, K, personal_learning_rate, i, times)
         
         server.train(save_model=save_model, current_time=i, total_times=times)
         server.test()
 
     # Average data 
     if(algorithm == "PerAvg"):
-        algorithm == "PerAvg_p"
+        algorithm = "PerAvg_p"
     if(algorithm == "pFedMe"):
         average_data(
             num_users=numusers,
@@ -123,6 +143,8 @@ if __name__ == "__main__":
     parser.add_argument("--local_epochs", type=int, default=20)
     parser.add_argument("--optimizer", type=str, default="SGD")
     parser.add_argument("--algorithm", type=str, default="pFedMe",choices=["pFedMe", "PerAvg", "FedAvg", "Oort", "PoC", "MESA", "HiCS"])
+    parser.add_argument("--framework", type=str, default="pfedme", choices=["pfedme", "fedavg"], 
+                        help="Framework type: 'pfedme' (personalized, default) or 'fedavg' (standard FL). Only affects Oort, PoC, HiCS. MESA and pFedMe always use pfedme.")
     parser.add_argument("--numusers", type=int, default=20, help="Number of Users per round")
     parser.add_argument("--K", type=int, default=5, help="Computation steps")
     parser.add_argument("--personal_learning_rate", type=float, default=0.09, help="Persionalized learning rate to caculate theta aproximately using K steps")
@@ -142,6 +164,7 @@ if __name__ == "__main__":
     logger.info(f"Number of local rounds       : {args.local_epochs}")
     logger.info(f"Dataset       : {args.dataset}")
     logger.info(f"Local Model       : {args.model}")
+    logger.info(f"Framework         : {args.framework}")
     logger.info("=" * 80)
 
     main(
@@ -160,5 +183,6 @@ if __name__ == "__main__":
         personal_learning_rate=args.personal_learning_rate,
         times=args.times,
         gpu=args.gpu,
-        save_model=args.save_model
+        save_model=args.save_model,
+        framework=args.framework
     )

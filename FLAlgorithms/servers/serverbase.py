@@ -157,10 +157,12 @@ class Server:
         )
         os.makedirs(result_dir, exist_ok=True)
         
-        # 文件名使用 current_time（当前实验次数）
-        alg = build_result_filename(self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=False)[:-3]  # 去掉.h5后缀
+        # 使用统一的文件名构建工具（全局模型）
+        alg_filename = build_result_filename(
+            self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=False
+        )
         if (len(self.rs_glob_acc) != 0 &  len(self.rs_train_acc) & len(self.rs_train_loss)) :
-            with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
+            with h5py.File(f"{result_dir}/{alg_filename}", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc)
                 hf.create_dataset('rs_train_acc', data=self.rs_train_acc)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss)
@@ -190,9 +192,9 @@ class Server:
                 hf.close()
         
         # store persionalized value
-        alg_p = build_result_filename(self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=True)[:-3]  # 去掉.h5后缀
+        alg_p_filename = build_result_filename(self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=True)
         if (len(self.rs_glob_acc_per) != 0 &  len(self.rs_train_acc_per) & len(self.rs_train_loss_per)) :
-            with h5py.File(f"{result_dir}/{alg_p}.h5", 'w') as hf:
+            with h5py.File(f"{result_dir}/{alg_p_filename}", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc_per)
                 hf.create_dataset('rs_train_acc', data=self.rs_train_acc_per)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss_per)

@@ -5,8 +5,9 @@
 
 import os
 
-# 需要额外参数 K 和 personal_learning_rate 的算法
-PFEDME_BASED_ALGORITHMS = ["pFedMe", "pFedMe_p"]
+# 需要额外参数 K 和 personal_learning_rate 的算法（pFedMe 框架版本）
+# 注意：FedAvg 版本（算法名包含 "_FedAvg"）不需要这些参数
+PFEDME_BASED_ALGORITHMS = ["pFedMe", "pFedMe_p", "MESA", "HiCS", "Oort", "PoC"]
 
 
 def build_result_dir(model_name, dataset, num_users, num_glob_iters, total_times,
@@ -56,8 +57,12 @@ def build_result_filename(algorithm, local_epochs, current_time, K=None, persona
     # 基础文件名
     filename = f"{alg_name}_{local_epochs}e"
     
-    # pFedMe系列算法需要额外参数
-    if algorithm in PFEDME_BASED_ALGORITHMS and K is not None and personal_learning_rate is not None:
+    # pFedMe系列算法需要额外参数（但 FedAvg 版本不需要）
+    # 检查是否为 FedAvg 版本
+    is_fedavg_version = "_FedAvg" in algorithm
+    base_algorithm = algorithm.replace("_FedAvg", "")
+    
+    if base_algorithm in PFEDME_BASED_ALGORITHMS and not is_fedavg_version and K is not None and personal_learning_rate is not None:
         filename = f"{filename}_{K}_{personal_learning_rate}"
     
     # 添加当前次数或平均标记
