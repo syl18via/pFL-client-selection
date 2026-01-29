@@ -1,6 +1,11 @@
 #!/bin/bash
 # MNIST 数据集对比实验脚本
-# 运行 MESA, Oort, PoC, HiCS, pFedMe, FedAvg, PerAvg 算法
+# 运行 MESA, Oort_FedAvg, PoC_FedAvg, HiCS_FedAvg, pFedMe, FedAvg, PerAvg 算法
+# 
+# 注意：
+# - 本脚本只运行 FedAvg 框架版本（标准训练）
+# - Oort/PoC/HiCS 的 pFedMe 版本已被注释掉
+# - 如需运行 pFedMe 版本，请取消注释相应的命令
 
 set -e  # 出错时停止
 
@@ -50,32 +55,59 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
     > "$LOG_DIR/dnn_MESA.log" 2>&1
 
-# Oort
-echo "[2/7] Running Oort... (log: $LOG_DIR/dnn_Oort.log)"
-nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
-    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-    --local_epochs $LOCAL_EPOCHS --algorithm Oort \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
-    > "$LOG_DIR/dnn_Oort.log" 2>&1
+# Oort (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# echo "[2/7] Running Oort (pFedMe)... (log: $LOG_DIR/dnn_Oort.log)"
+# nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+#     --local_epochs $LOCAL_EPOCHS --algorithm Oort \
+#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+#     > "$LOG_DIR/dnn_Oort.log" 2>&1
 
-# PoC
-echo "[3/7] Running PoC... (log: $LOG_DIR/dnn_PoC.log)"
+# Oort (FedAvg framework)
+echo "[2/7] Running Oort (FedAvg)... (log: $LOG_DIR/dnn_Oort_FedAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --learning_rate $LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-    --local_epochs $LOCAL_EPOCHS --algorithm PoC \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
-    > "$LOG_DIR/dnn_PoC.log" 2>&1
+    --local_epochs $LOCAL_EPOCHS --algorithm Oort --framework fedavg \
+    --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_Oort_FedAvg.log" 2>&1
 
-# HiCS
-echo "[4/7] Running HiCS... (log: $LOG_DIR/dnn_HiCS.log)"
+# PoC (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# echo "[3/7] Running PoC (pFedMe)... (log: $LOG_DIR/dnn_PoC.log)"
+# nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+#     --local_epochs $LOCAL_EPOCHS --algorithm PoC \
+#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+#     > "$LOG_DIR/dnn_PoC.log" 2>&1
+
+# PoC (FedAvg framework)
+echo "[3/7] Running PoC (FedAvg)... (log: $LOG_DIR/dnn_PoC_FedAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --learning_rate $LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-    --local_epochs $LOCAL_EPOCHS --algorithm HiCS \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
-    > "$LOG_DIR/dnn_HiCS.log" 2>&1
+    --local_epochs $LOCAL_EPOCHS --algorithm PoC --framework fedavg \
+    --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_PoC_FedAvg.log" 2>&1
+
+# HiCS (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# echo "[4/7] Running HiCS (pFedMe)... (log: $LOG_DIR/dnn_HiCS.log)"
+# nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+#     --local_epochs $LOCAL_EPOCHS --algorithm HiCS \
+#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+#     > "$LOG_DIR/dnn_HiCS.log" 2>&1
+
+# HiCS (FedAvg framework)
+echo "[4/7] Running HiCS (FedAvg)... (log: $LOG_DIR/dnn_HiCS_FedAvg.log)"
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+    --learning_rate $LR \
+    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+    --local_epochs $LOCAL_EPOCHS --algorithm HiCS --framework fedavg \
+    --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/dnn_HiCS_FedAvg.log" 2>&1
 
 # pFedMe
 echo "[5/7] Running pFedMe... (log: $LOG_DIR/dnn_pFedMe.log)"
@@ -126,32 +158,59 @@ nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_S
     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
     > "$LOG_DIR/mclr_MESA.log" 2>&1
 
-# Oort
-echo "[2/7] Running Oort (Convex)... (log: $LOG_DIR/mclr_Oort.log)"
-nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
-    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-    --local_epochs $LOCAL_EPOCHS --algorithm Oort \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
-    > "$LOG_DIR/mclr_Oort.log" 2>&1
+# Oort (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# echo "[2/7] Running Oort (Convex, pFedMe)... (log: $LOG_DIR/mclr_Oort.log)"
+# nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+#     --local_epochs $LOCAL_EPOCHS --algorithm Oort \
+#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+#     > "$LOG_DIR/mclr_Oort.log" 2>&1
 
-# PoC
-echo "[3/7] Running PoC (Convex)... (log: $LOG_DIR/mclr_PoC.log)"
+# Oort (FedAvg framework)
+echo "[2/7] Running Oort (Convex, FedAvg)... (log: $LOG_DIR/mclr_Oort_FedAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --learning_rate $LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-    --local_epochs $LOCAL_EPOCHS --algorithm PoC \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
-    > "$LOG_DIR/mclr_PoC.log" 2>&1
+    --local_epochs $LOCAL_EPOCHS --algorithm Oort --framework fedavg \
+    --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_Oort_FedAvg.log" 2>&1
 
-# HiCS
-echo "[4/7] Running HiCS (Convex)... (log: $LOG_DIR/mclr_HiCS.log)"
+# PoC (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# echo "[3/7] Running PoC (Convex, pFedMe)... (log: $LOG_DIR/mclr_PoC.log)"
+# nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+#     --local_epochs $LOCAL_EPOCHS --algorithm PoC \
+#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+#     > "$LOG_DIR/mclr_PoC.log" 2>&1
+
+# PoC (FedAvg framework)
+echo "[3/7] Running PoC (Convex, FedAvg)... (log: $LOG_DIR/mclr_PoC_FedAvg.log)"
 nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
-    --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+    --learning_rate $LR \
     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
-    --local_epochs $LOCAL_EPOCHS --algorithm HiCS \
-    --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
-    > "$LOG_DIR/mclr_HiCS.log" 2>&1
+    --local_epochs $LOCAL_EPOCHS --algorithm PoC --framework fedavg \
+    --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_PoC_FedAvg.log" 2>&1
+
+# HiCS (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# echo "[4/7] Running HiCS (Convex, pFedMe)... (log: $LOG_DIR/mclr_HiCS.log)"
+# nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+#     --learning_rate $LR --personal_learning_rate $PERSONAL_LR \
+#     --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+#     --local_epochs $LOCAL_EPOCHS --algorithm HiCS \
+#     --numusers $NUM_USERS --K $K --times $TIMES --gpu $GPU \
+#     > "$LOG_DIR/mclr_HiCS.log" 2>&1
+
+# HiCS (FedAvg framework)
+echo "[4/7] Running HiCS (Convex, FedAvg)... (log: $LOG_DIR/mclr_HiCS_FedAvg.log)"
+nohup python3 -u main.py --dataset $DATASET --model $MODEL --batch_size $BATCH_SIZE \
+    --learning_rate $LR \
+    --beta $BETA --lamda $LAMDA --num_global_iters $NUM_GLOBAL_ITERS \
+    --local_epochs $LOCAL_EPOCHS --algorithm HiCS --framework fedavg \
+    --numusers $NUM_USERS --times $TIMES --gpu $GPU \
+    > "$LOG_DIR/mclr_HiCS_FedAvg.log" 2>&1
 
 # pFedMe
 echo "[5/7] Running pFedMe (Convex)... (log: $LOG_DIR/mclr_pFedMe.log)"

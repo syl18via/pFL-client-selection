@@ -2,6 +2,11 @@
 """
 MNIST 数据集对比实验脚本
 支持多GPU并行运行，每块GPU同时只运行一个任务
+
+注意：
+- 本脚本只运行 FedAvg 框架版本（标准训练）
+- Oort/PoC/HiCS 使用 FedAvg 框架（--framework fedavg）
+- 如需运行 pFedMe 版本，请修改相应的命令
 """
 
 import subprocess
@@ -17,7 +22,7 @@ BATCH_SIZE = 20
 NUM_GLOBAL_ITERS = 500
 LOCAL_EPOCHS = 20
 NUM_USERS = 5
-TIMES = 3
+TIMES = 1
 
 # pFedMe/MESA/Oort/PoC 专用参数
 K = 5
@@ -35,16 +40,16 @@ print(f"Log directory: {LOG_DIR}")
 TASKS = []
 TASKS_TODO = [
     "DNN-MESA",
-    "DNN-HiCS",
-    "DNN-Oort",
-    "DNN-PoC",
+    "DNN-HiCS-FedAvg",
+    "DNN-Oort-FedAvg",
+    "DNN-PoC-FedAvg",
     "DNN-pFedMe",
     "DNN-FedAvg",
     "DNN-PerAvg",
     "MCLR-MESA",
-    "MCLR-HiCS",
-    "MCLR-Oort",
-    "MCLR-PoC",
+    "MCLR-HiCS-FedAvg",
+    "MCLR-Oort-FedAvg",
+    "MCLR-PoC-FedAvg",
     "MCLR-pFedMe",
     "MCLR-FedAvg",
     "MCLR-PerAvg",
@@ -66,34 +71,64 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
 """))
 
-# HiCS
-if "DNN-HiCS" in TASKS_TODO:
-    TASKS.append(("DNN-HiCS", "dnn_HiCS.log", f"""
+# HiCS (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# if "DNN-HiCS" in TASKS_TODO:
+#     TASKS.append(("DNN-HiCS", "dnn_HiCS.log", f"""
+# python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
+#     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+#     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
+#     --local_epochs {LOCAL_EPOCHS} --algorithm HiCS \
+#     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+# """))
+
+# HiCS (FedAvg framework)
+if "DNN-HiCS-FedAvg" in TASKS_TODO:
+    TASKS.append(("DNN-HiCS-FedAvg", "dnn_HiCS_FedAvg.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+    --learning_rate {LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm HiCS \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+    --local_epochs {LOCAL_EPOCHS} --algorithm HiCS --framework fedavg \
+    --numusers {NUM_USERS} --times {TIMES} --gpu {{gpu}}
 """))
 
-# Oort
-if "DNN-Oort" in TASKS_TODO:
-    TASKS.append(("DNN-Oort", "dnn_Oort.log", f"""
+# Oort (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# if "DNN-Oort" in TASKS_TODO:
+#     TASKS.append(("DNN-Oort", "dnn_Oort.log", f"""
+# python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
+#     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+#     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
+#     --local_epochs {LOCAL_EPOCHS} --algorithm Oort \
+#     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+# """))
+
+# Oort (FedAvg framework)
+if "DNN-Oort-FedAvg" in TASKS_TODO:
+    TASKS.append(("DNN-Oort-FedAvg", "dnn_Oort_FedAvg.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+    --learning_rate {LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm Oort \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+    --local_epochs {LOCAL_EPOCHS} --algorithm Oort --framework fedavg \
+    --numusers {NUM_USERS} --times {TIMES} --gpu {{gpu}}
 """))
 
-# PoC
-if "DNN-PoC" in TASKS_TODO:
-    TASKS.append(("DNN-PoC", "dnn_PoC.log", f"""
+# PoC (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# if "DNN-PoC" in TASKS_TODO:
+#     TASKS.append(("DNN-PoC", "dnn_PoC.log", f"""
+# python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
+#     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+#     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
+#     --local_epochs {LOCAL_EPOCHS} --algorithm PoC \
+#     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+# """))
+
+# PoC (FedAvg framework)
+if "DNN-PoC-FedAvg" in TASKS_TODO:
+    TASKS.append(("DNN-PoC-FedAvg", "dnn_PoC_FedAvg.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+    --learning_rate {LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm PoC \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+    --local_epochs {LOCAL_EPOCHS} --algorithm PoC --framework fedavg \
+    --numusers {NUM_USERS} --times {TIMES} --gpu {{gpu}}
 """))
 
 # pFedMe
@@ -140,34 +175,64 @@ python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE}
     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
 """))
 
-# HiCS
-if "MCLR-HiCS" in TASKS_TODO:
-    TASKS.append(("MCLR-HiCS", "mclr_HiCS.log", f"""
+# HiCS (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# if "MCLR-HiCS" in TASKS_TODO:
+#     TASKS.append(("MCLR-HiCS", "mclr_HiCS.log", f"""
+# python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
+#     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+#     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
+#     --local_epochs {LOCAL_EPOCHS} --algorithm HiCS \
+#     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+# """))
+
+# HiCS (FedAvg framework)
+if "MCLR-HiCS-FedAvg" in TASKS_TODO:
+    TASKS.append(("MCLR-HiCS-FedAvg", "mclr_HiCS_FedAvg.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+    --learning_rate {LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm HiCS \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+    --local_epochs {LOCAL_EPOCHS} --algorithm HiCS --framework fedavg \
+    --numusers {NUM_USERS} --times {TIMES} --gpu {{gpu}}
 """))
 
-# Oort
-if "MCLR-Oort" in TASKS_TODO:
-    TASKS.append(("MCLR-Oort", "mclr_Oort.log", f"""
+# Oort (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# if "MCLR-Oort" in TASKS_TODO:
+#     TASKS.append(("MCLR-Oort", "mclr_Oort.log", f"""
+# python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
+#     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+#     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
+#     --local_epochs {LOCAL_EPOCHS} --algorithm Oort \
+#     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+# """))
+
+# Oort (FedAvg framework)
+if "MCLR-Oort-FedAvg" in TASKS_TODO:
+    TASKS.append(("MCLR-Oort-FedAvg", "mclr_Oort_FedAvg.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+    --learning_rate {LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm Oort \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+    --local_epochs {LOCAL_EPOCHS} --algorithm Oort --framework fedavg \
+    --numusers {NUM_USERS} --times {TIMES} --gpu {{gpu}}
 """))
 
-# PoC
-if "MCLR-PoC" in TASKS_TODO:
-    TASKS.append(("MCLR-PoC", "mclr_PoC.log", f"""
+# PoC (pFedMe framework - COMMENTED OUT, only running FedAvg version)
+# if "MCLR-PoC" in TASKS_TODO:
+#     TASKS.append(("MCLR-PoC", "mclr_PoC.log", f"""
+# python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
+#     --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+#     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
+#     --local_epochs {LOCAL_EPOCHS} --algorithm PoC \
+#     --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+# """))
+
+# PoC (FedAvg framework)
+if "MCLR-PoC-FedAvg" in TASKS_TODO:
+    TASKS.append(("MCLR-PoC-FedAvg", "mclr_PoC_FedAvg.log", f"""
 python3 -u main.py --dataset {DATASET} --model {MODEL} --batch_size {BATCH_SIZE} \
-    --learning_rate {LR} --personal_learning_rate {PERSONAL_LR} \
+    --learning_rate {LR} \
     --beta {BETA} --lamda {LAMDA} --num_global_iters {NUM_GLOBAL_ITERS} \
-    --local_epochs {LOCAL_EPOCHS} --algorithm PoC \
-    --numusers {NUM_USERS} --K {K} --times {TIMES} --gpu {{gpu}}
+    --local_epochs {LOCAL_EPOCHS} --algorithm PoC --framework fedavg \
+    --numusers {NUM_USERS} --times {TIMES} --gpu {{gpu}}
 """))
 
 # pFedMe

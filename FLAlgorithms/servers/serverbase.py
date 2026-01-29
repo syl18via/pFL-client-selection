@@ -157,18 +157,12 @@ class Server:
         )
         os.makedirs(result_dir, exist_ok=True)
         
-        alg = self.dataset + "_" + self.algorithm
-        alg = alg + "_" + str(self.learning_rate) + "_" + str(self.beta) + "_" + str(self.lamda) + "_" + str(self.num_users) + "u" + "_" + str(self.batch_size) + "b" + "_" + str(self.local_epochs)
-        # MESA, HiCS, Oort, PoC 也继承自 pFedMe，需要 K 和 personal_learning_rate 参数
-        # 但 FedAvg 版本（算法名包含 "_FedAvg"）不需要这些参数
-        base_algorithm = self.algorithm.replace("_FedAvg", "")  # 移除 _FedAvg 后缀以检查基础算法
-        if(base_algorithm in ["pFedMe", "MESA", "HiCS", "Oort", "PoC"] or self.algorithm == "pFedMe_p"):
-            # 只有 pFedMe 版本才需要 K 和 personal_learning_rate
-            if "_FedAvg" not in self.algorithm and hasattr(self, 'K') and hasattr(self, 'personal_learning_rate'):
-                alg = alg + "_" + str(self.K) + "_" + str(self.personal_learning_rate)
-        alg = alg + "_" + str(self.current_time)
+        # 使用统一的文件名构建工具（全局模型）
+        alg_filename = build_result_filename(
+            self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=False
+        )
         if (len(self.rs_glob_acc) != 0 &  len(self.rs_train_acc) & len(self.rs_train_loss)) :
-            with h5py.File(f"{result_dir}/{alg}.h5", 'w') as hf:
+            with h5py.File(f"{result_dir}/{alg_filename}", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc)
                 hf.create_dataset('rs_train_acc', data=self.rs_train_acc)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss)
@@ -198,9 +192,9 @@ class Server:
                 hf.close()
         
         # store persionalized value
-        alg_p = build_result_filename(self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=True)[:-3]  # 去掉.h5后缀
+        alg_p_filename = build_result_filename(self.algorithm, self.local_epochs, self.current_time, K, personal_lr, personalized=True)
         if (len(self.rs_glob_acc_per) != 0 &  len(self.rs_train_acc_per) & len(self.rs_train_loss_per)) :
-            with h5py.File(f"{result_dir}/{alg_p}.h5", 'w') as hf:
+            with h5py.File(f"{result_dir}/{alg_p_filename}", 'w') as hf:
                 hf.create_dataset('rs_glob_acc', data=self.rs_glob_acc_per)
                 hf.create_dataset('rs_train_acc', data=self.rs_train_acc_per)
                 hf.create_dataset('rs_train_loss', data=self.rs_train_loss_per)
